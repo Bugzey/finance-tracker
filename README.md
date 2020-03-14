@@ -22,4 +22,11 @@ Personal monthly finance tracker inspired by a free well-structured, but hard to
 - [ ] Report builder - select from preset measures and graphs
 
 ##	Tasks
+SQLite
 
+- create category, subcategory, transaction tables
+- procedures to add, modify or cancel a transaction
+- procedures to add, modify or cancel a balance item via fictional transactions
+- assure transactions are never deleted via triggers
+- allow categories and subcategories to be modified using current and historic names
+- disallow deletion of categories and subcategories via triggers
