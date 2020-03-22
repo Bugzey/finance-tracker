@@ -11,7 +11,7 @@ def import_export_test():
 
 
 def database_test():
-    pass
+    import finance-tracker.database
 
 
 def reporting_test():

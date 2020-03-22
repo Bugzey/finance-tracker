@@ -2,8 +2,15 @@
 
 """
 
+import sqlite3
+
 def create_database(file_path):
-    pass
+    conn = sqlite3.connect(file_path)
+
+    with open("schema.sql", r) as schema_file:
+        schema = schema_file.read()
+
+    conn.execute(schema)
 
 
 def read_balance():
