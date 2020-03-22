@@ -5,25 +5,23 @@
 /*	Category table, indices and triggers	*/
 create table category
 (
-	category_id int not null
-	, historic_category_name varchar not null collate nocase
-	, current_category_name varchar not null collate nocase
-	, created_time varchar default current_timestamp not null
-	, valid_to_time varchar default null
-	, constraint pk_category PRIMARY KEY (category_id)
+	category_id integer primary key autoincrement
+	, historic_category_name text not null collate nocase
+	, current_category_name text not null collate nocase
+	, created_time text default current_timestamp not null
+	, valid_to_time text default null
 	, constraint unique_category_name unique (current_category_name, historic_category_name)
 );
 
 /* Subcategory table, indices and triggers */
 create table subcategory
 (
-	subcategory_id int not null
-	, category_id int not null
-	, current_subcategory_name varchar not null collate nocase
-	, historic_subcategory_name varchar not null collate nocase
-	, created_time varchar default current_timestamp not null
-	, valid_to_time varchar default null
-	, constraint pk_subcategory PRIMARY KEY (subcategory_id)
+	subcategory_id integer primary key autoincrement
+	, category_id integer not null
+	, current_subcategory_name text not null collate nocase
+	, historic_subcategory_name text not null collate nocase
+	, created_time text default current_timestamp not null
+	, valid_to_time text default null
 	, constraint unique_subcategory_name unique (current_subcategory_name, historic_subcategory_name)
 	, constraint fk_subcategory_category foreign key (category_id)
 	references category (category_id)
@@ -33,14 +31,13 @@ create table subcategory
 /*	ledger table, indices and triggers */
 create table ledger
 (
-	ledger_id int not null
-	, category_id int not null
-	, subcategory_id int not null
-	, created_time varchar default current_timestamp not null
-	, accounting_date varchar not null
-	, transaction_time varchar not null
-	, ledger_amount float not null
-	, constraint pk_ledger primary key (ledger_id)
+	ledger_id integer primary key autoincrement
+	, category_id integer not null
+	, subcategory_id integer not null
+	, created_time text default current_timestamp not null
+	, accounting_date text not null
+	, transaction_time text not null
+	, ledger_amount real not null
 	, constraint fk_ledger_category foreign key (category_id)
 	references category (category_id)
 	, constraint fk_ledger_subcategory foreign key (subcategory_id)
