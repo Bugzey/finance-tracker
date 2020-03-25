@@ -7,6 +7,8 @@ import os
 import logging
 import pkgutil
 
+logger = logging.getLogger(__name__)
+
 class Database:
     def __init__(self, file_path = ":memory:"):
         self.file_path = file_path
@@ -20,6 +22,38 @@ class Database:
         schema = pkgutil.get_data(__package__, "schema.sql") # get file within the defined package
         self._con.executescript(schema.decode("utf-8"))
 
+    
+    def get_category(self, name):
+        query = """
+        select 
+            category_id 
+            , current_category_name
+        from category
+        where current_category_name = :name
+        and valid_to_time is null
+        ;
+        """
+        if type(name) in [str, int, float]:
+            category_id = self._con.execute(query, {"name": name}).fetchone()
+        elif type(name) == list:
+            category_id = self._con.executemany(query, [{"name": item} for item in name]).fetchall()
+
+        return(category_id)
+
+
+    def get_subcategory(self, category_id):
+        query = """
+        select 
+            subcategory_id
+            , category_id
+            , current_subcategory_name
+        from subcategory
+        where category_id = :category_id
+        and valid_to_time is null
+        """
+        subcategory_id = self._con.execute(query, {"category_id": category_id}).fetchall()
+        return(subcategory_id)
+
 
     def add_category(self, category_name):
         insert_query = """
@@ -30,8 +64,11 @@ class Database:
         values
                 (:category_name, :category_name);
         """
-        current_categories_query = "select current_category_name from category where valid_to_time is null"
-        current_categories = self._con.execute(current_categories_query)
+        current_categories = self.get_category(category_name)
+        logger.debug(f"current_categories: {current_categories}")
+
+        if current_categories is None:
+            current_categories = []
 
         #   Allow bulk execution
         if type(category_name) in [int, float, str]:
@@ -46,19 +83,6 @@ class Database:
 
 
     def add_subcategory(self, subcategory_name, category_name):
-        get_category_id = """
-        select category_id 
-        from category
-        where current_category_name = ?
-        and valid_to_time is null
-        ;
-        """
-        get_current_subcategories = """
-        select current_subcategory_name
-        from subcategory
-        where category_id = ?
-        and valid_to_time is null
-        """
         insert_query = """
         insert into subcategory (
             category_id
@@ -69,22 +93,30 @@ class Database:
             (:category_id, :subcategory_name, :subcategory_name)
         ;
         """
-        category_id = next(self._con.execute(get_category_id, [category_name]))
-        current_subcategories = self._con.execute(get_current_subcategories, category_id)
+        category_id = self.get_category(category_name)[0]
+        logger.debug(f"category_id: {category_id}")
+        current_subcategories = map(lambda x: x[2], self.get_subcategory(category_id))
+
+        if current_subcategories is None:
+            current_subcategories = []
 
         if type(subcategory_name) in [str, int, float]:
             assert subcategory_name not in current_subcategories, f"Subcategories already exist: {subcategory_name}"
-            self._con.execute(insert_query, {"category_id": category_id[0], "subcategory_name": subcategory_name})
+            self._con.execute(insert_query, {"category_id": category_id, "subcategory_name": subcategory_name})
         elif type(subcategory_name) == list:
             assert not any(map(lambda x: x in current_subcategories, subcategory_name)), f"Subcategories already exist: {', '.join(subcategory_name)}"
-            args = ({"category_id": category_id[0], "subcategory_name": item} for item in subcategory_name)
+            args = ({"category_id": category_id, "subcategory_name": item} for item in subcategory_name)
             self._con.executemany(insert_query, args)
         else:
             raise TypeError(f"Unsupported table name type: {type(subcategory_name)}")
 
 
-    def modify_category():
-        pass
+    def modify_category(self, old, new):
+        get_category_id = "select category_id from category where category_current_name = :old and valid_to_time is NULL"
+        get_subcategory_id = "select subcategory_id from subcategory where category_id = :old_category_id and valid_to_time is NULL"
+        invalidate_category = "update category set valid_to_time = datetime('now') where category_id = :old_category_id"
+        invalidate_subcategory = "update subcategory set valid_to_time = datetime('now') where subcategory_id = :old_subcategory_id"
+                
 
     def modify_subcategory():
         pass
@@ -122,23 +154,3 @@ class Database:
         return(result)
 
 
-def run_test():
-    logging.basicConfig(level = logging.INFO)
-    logging.info("Creating database instance")
-    test_db = Database()
-
-    logging.info("Insert dummy categories")
-    test_db.add_category("bla")
-    test_db.add_category(["bla1", "bla2"])
-
-    logging.info("Insert dummy subcategories")
-    test_db.add_subcategory("sub_bla", "bla")
-    test_db.add_subcategory(["sub_bla1", "sub_bla2"], "bla")
-
-    logging.info("Printing results")
-    logging.info(list(test_db.list_categories()))
-    logging.info(list(test_db.list_subcategories("bla")))
-
-
-if __name__ == "__main__":
-    run_test()
