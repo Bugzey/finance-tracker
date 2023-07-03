@@ -43,12 +43,14 @@ class SubcategoryModel(Base):
 class UserModel(Base):
     __tablename__ = "user"
     name: Mapped[str]
+    accounts: Mapped[list["AccountModel"]] = relationship(back_populates="user")
 
 
 class AccountModel(Base):
     __tablename__ = "account"
     name: Mapped[str]
     user_id: Mapped[int] = mapped_column(ForeignKey("user.id"))
+    user: Mapped["UserModel"] = relationship(back_populates="accounts")
 
 
 class BusinessModel(Base):
@@ -56,13 +58,16 @@ class BusinessModel(Base):
     name: Mapped[str]
     code: Mapped[str]
     default_category_id: Mapped[int] = mapped_column(ForeignKey("category.id"))
+    default_category: Mapped["CategoryModel"] = relationship()
     default_subcategory_id: Mapped[int] = mapped_column(ForeignKey("subcategory.id"))
+    default_subcategory: Mapped["SubcategoryModel"] = relationship()
 
 
 class TransactionModel(Base):
     __tablename__ = "transaction"
     amount: Mapped[Decimal]
     account_id: Mapped[int] = mapped_column(ForeignKey("account.id"))
+    account: Mapped["AccountModel"] = relationship()
     category_id: Mapped[int] = mapped_column(ForeignKey("category.id"))
     category: Mapped["CategoryModel"] = relationship()
     subcategory_id: Mapped[int] = mapped_column(ForeignKey("subcategory.id"))
