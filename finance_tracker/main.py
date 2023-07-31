@@ -7,30 +7,40 @@ import shlex
 import sys
 
 
+class HasSubparsers:
+    def add_parser(self) -> ArgumentParser:
+        pass
+
+
 class Parser:
-    def __init__(self):
-        self.parser = ArgumentParser(prog="finance_tracker", exit_on_error=False)
-        self.parser.add_argument("-i", "--interactive", action="store_true")
-        self.subparsers = self.parser.add_subparsers(title="action", dest="action")
-        self._add_category()
-        self._add_quit()
+    @classmethod
+    def make_parser(cls) -> ArgumentParser:
+        parser = ArgumentParser(prog="finance_tracker", exit_on_error=False)
+        parser.add_argument("-i", "--interactive", action="store_true")
+        subparsers = parser.add_subparsers(title="action", dest="action")
+        cls._add_category(subparsers)
+        cls._add_quit(subparsers)
+        return parser
 
-    def _add_quit(self):
-        parser = self.subparsers.add_parser(name="quit")
+    @classmethod
+    def _add_quit(cls, subparsers: HasSubparsers):
+        _ = subparsers.add_parser(name="quit")
 
-    def _add_category(self):
-        parser = self.subparsers.add_parser(name="category")
+    @classmethod
+    def _add_category(cls, subparsers: HasSubparsers):
+        parser = subparsers.add_parser(name="category")
         parser.add_argument("-n", "--name", required=True)
 
 
 def main():
-    parser = Parser().parser
+    parser_maker = Parser()
+    parser = parser_maker.make_parser()
     args = parser.parse_args()
     if not args.interactive:
-        pring(args)
+        print(args)
         return
 
-    while True and not args.action=="quit":
+    while True and not args.action == "quit":
         try:
             args = parser.parse_args(shlex.split(input()))
         except SystemExit:

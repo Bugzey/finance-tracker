@@ -5,7 +5,6 @@ Database models
 import datetime as dt
 from decimal import Decimal
 
-import sqlalchemy as db
 from sqlalchemy import (
     ForeignKey,
     func,
@@ -13,13 +12,12 @@ from sqlalchemy import (
 from sqlalchemy.orm import (
     DeclarativeBase,
     Mapped,
-    Session,
     mapped_column,
     relationship,
 )
 
 
-class Base(DeclarativeBase):
+class BaseModel(DeclarativeBase):
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     created_time: Mapped[dt.datetime] = mapped_column(
         server_default=func.now(),
@@ -30,30 +28,22 @@ class Base(DeclarativeBase):
     )
 
 
-class CategoryModel(Base):
+class CategoryModel(BaseModel):
     __tablename__ = "category"
     name: Mapped[str]
 
 
-class SubcategoryModel(Base):
+class SubcategoryModel(BaseModel):
     __tablename__ = "subcategory"
     name: Mapped[str]
 
 
-class UserModel(Base):
-    __tablename__ = "user"
-    name: Mapped[str]
-    accounts: Mapped[list["AccountModel"]] = relationship(back_populates="user")
-
-
-class AccountModel(Base):
+class AccountModel(BaseModel):
     __tablename__ = "account"
     name: Mapped[str]
-    user_id: Mapped[int] = mapped_column(ForeignKey("user.id"))
-    user: Mapped["UserModel"] = relationship(back_populates="accounts")
 
 
-class BusinessModel(Base):
+class BusinessModel(BaseModel):
     __tablename__ = "business"
     name: Mapped[str]
     code: Mapped[str]
@@ -63,7 +53,7 @@ class BusinessModel(Base):
     default_subcategory: Mapped["SubcategoryModel"] = relationship()
 
 
-class TransactionModel(Base):
+class TransactionModel(BaseModel):
     __tablename__ = "transaction"
     amount: Mapped[Decimal]
     account_id: Mapped[int] = mapped_column(ForeignKey("account.id"))

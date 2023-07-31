@@ -1,8 +1,7 @@
-"""Generate summary reports
-
+"""
+Generate summary reports
 """
 
-def create_report(file_path, report_format = ["html", "pdf"]):
+
+def create_report(file_path, report_format=["html", "pdf"]):
     pass
-
-
