@@ -2,6 +2,7 @@
 Unit tests for application logic
 """
 
+import datetime as dt
 import unittest
 
 from sqlalchemy import create_engine
@@ -15,6 +16,7 @@ from finance_tracker.models import (
 )
 from finance_tracker.managers import (
     BaseManager,
+    PeriodManager,
 )
 
 
@@ -44,3 +46,31 @@ class BaseManagerTestCase(unittest.TestCase):
         self.assertIsInstance(result, SomeModel)
         self.assertEqual(result.value, "bla")
         self.assertEqual(result.id, 1)
+
+    def test_create(self):
+        _ = self.manager.create(value="bla2")
+        self.sess.flush()
+        result = self.manager.get(2)
+        self.assertIsInstance(result, SomeModel)
+        self.assertEqual(result.value, "bla2")
+
+    def test_delete(self):
+        result = self.manager.delete(id=1)
+        self.assertEqual(result.value, "bla")
+        self.sess.flush()
+        new = self.manager.get(id=1)
+        self.assertIsNone(new)
+
+
+class PeriodTestCase(unittest.TestCase):
+    def setUp(self):
+        self.engine = create_engine("sqlite:///:memory:")
+        BaseModel.metadata.create_all(self.engine)
+        self.sess = Session(self.engine)
+        self.manager = PeriodManager(sess=self.sess)
+
+    def test_create_blank(self):
+        result = self.manager.create()
+        self.sess.flush()
+        self.assertEqual(result.period_start, dt.date.today().replace(day=1))
+        self.assertEqual(result.code, dt.date.today().strftime("%Y%m"))

@@ -30,12 +30,12 @@ class BaseModel(DeclarativeBase):
 
 class CategoryModel(BaseModel):
     __tablename__ = "category"
-    name: Mapped[str]
+    name: Mapped[str] = mapped_column(unique=True)
 
 
 class SubcategoryModel(BaseModel):
     __tablename__ = "subcategory"
-    name: Mapped[str]
+    name: Mapped[str] = mapped_column(unique=True)
 
 
 class AccountModel(BaseModel):
@@ -46,11 +46,18 @@ class AccountModel(BaseModel):
 class BusinessModel(BaseModel):
     __tablename__ = "business"
     name: Mapped[str]
-    code: Mapped[str]
+    code: Mapped[str] = mapped_column(unique=True)
     default_category_id: Mapped[int] = mapped_column(ForeignKey("category.id"))
     default_category: Mapped["CategoryModel"] = relationship()
     default_subcategory_id: Mapped[int] = mapped_column(ForeignKey("subcategory.id"))
     default_subcategory: Mapped["SubcategoryModel"] = relationship()
+
+
+class PeriodModel(BaseModel):
+    __tablename__ = "period"
+    code: Mapped[str]
+    period_start: Mapped[dt.date]
+    period_end: Mapped[dt.date]
 
 
 class TransactionModel(BaseModel):
