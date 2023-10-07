@@ -61,6 +61,15 @@ class BaseManagerTestCase(unittest.TestCase):
         new = self.manager.get(id=1)
         self.assertIsNone(new)
 
+    def test_update(self):
+        bad_date = dt.datetime(2000, 1, 1)
+        result = self.manager.update(id=1, value="changed", updated_time=bad_date)
+        self.assertEqual(result.value, "changed")
+        self.sess.flush()
+        result = self.manager.get(id=1)
+        self.assertEqual(result.value, "changed")
+        self.assertNotEqual(result.updated_time, bad_date)
+
 
 class PeriodTestCase(unittest.TestCase):
     def setUp(self):

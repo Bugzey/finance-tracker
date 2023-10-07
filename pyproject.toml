@@ -56,3 +56,24 @@ good-names = [
 	"ok",
 ]
 
+[tool.flake8]
+exclude = [
+	"*__init__.py",
+	"*__main__.py",
+]
+max-line-length = 100
+ignore = [
+	"E123", "E704", "E121", "W504", "E24", "W503", "E226", "E126", "E203"
+]
+verbose = true
+
+[tool.pytest.ini_options]
+markers = [
+	"integtest: marks integration tests"
+]
+
+[tool.black]
+diff = true
+line-length = 100
+extend-exclude = ".*ipynb"
+check = true

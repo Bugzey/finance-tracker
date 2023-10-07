@@ -8,12 +8,11 @@ import sqlalchemy
 
 from finance_tracker.models import (
     AccountModel,
-    Base,
+    BaseModel,
     BusinessModel,
     CategoryModel,
     SubcategoryModel,
     TransactionModel,
-    UserModel,
 )
 
 
@@ -21,7 +20,7 @@ class TestBase(unittest.TestCase):
     def setUp(self):
         self.engine = sqlalchemy.create_engine("sqlite+pysqlite:///:memory:")
         self.session = sqlalchemy.orm.Session(bind=self.engine)
-        Base.metadata.create_all(self.engine)
+        BaseModel.metadata.create_all(self.engine)
         self.session.begin()
 
     def tearDown(self):
@@ -39,8 +38,7 @@ class AccountModelTestCase(TestBase):
 class TransactionTestCase(TestBase):
     def setUp(self):
         super().setUp()
-        self.user = UserModel(name="user")
-        self.account = AccountModel(name="account", user=self.user)
+        self.account = AccountModel(name="account")
         self.category = CategoryModel(name="category")
         self.subcategory = SubcategoryModel(name="subcategory")
         self.business = BusinessModel(
@@ -50,7 +48,6 @@ class TransactionTestCase(TestBase):
             default_subcategory=self.subcategory,
         )
         self.session.add_all([
-            self.user,
             self.account,
             self.category,
             self.subcategory,
