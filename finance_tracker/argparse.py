@@ -1,9 +1,20 @@
 from argparse import ArgumentParser
+import shlex
 
 
 class HasSubparsers:
     def add_parser(*args, **kwargs):
         pass
+
+
+def process_data(data: str):
+    data = shlex.split(data)
+    result = {}
+    for item in data:
+        key, value = item.split("=", 1)
+        result[key] = value
+
+    return result
 
 
 class Parser:
@@ -50,4 +61,10 @@ class Parser:
     ):
         parser = subparsers.add_parser(name=action)
         parser = cls.add_objects_argument(parser)
+        parser = parser.add_argument(
+            "data",
+            help="Key-value pairs in the form KEY=VALUE",
+            nargs="?",
+            type=process_data,
+        )
         return parser
