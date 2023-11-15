@@ -2,7 +2,12 @@
 Entry-point module
 """
 
-from finance_tracker.main import main
+from finance_tracker.argparse import Parser
+
 
 if __name__ == "__main__":
-    main()
+    parser = Parser().get_parser()
+    args = parser.parse_args()
+
+    from finance_tracker.main import main
+    main(args)
