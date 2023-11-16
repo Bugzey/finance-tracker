@@ -82,7 +82,6 @@ def main(args):
     2. object - what to apply the action to
     """
     db_handler = DBHandler(path=args.database)
-    sess = Session(db_handler.engine)
     args.object = (
         args.object[0]
         if isinstance(args.object, list)
@@ -105,7 +104,7 @@ def main(args):
         case _:
             raise ValueError(f"Invalid object: {args.object}")
 
-    manager = manager(sess)
+    manager = manager(db_handler.engine)
 
     match args.action:
         case "help":
