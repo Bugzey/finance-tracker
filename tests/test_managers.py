@@ -31,15 +31,12 @@ class SomeManager(BaseManager):
 
 class BaseManagerTestCase(unittest.TestCase):
     def setUp(self):
-        self.engine = create_engine("sqlite:///:memory:")
+        self.engine = create_engine("sqlite:///:memory:", echo=False)
         BaseModel.metadata.create_all(self.engine)
-        self.sess = Session(self.engine)
-        self.sess.add(SomeModel(value="bla"))
-        self.sess.flush()
-        self.manager = SomeManager(sess=self.sess)
-
-    def tearDown(self):
-        self.sess.rollback()
+        with Session(self.engine) as sess:
+            sess.add(SomeModel(value="bla"))
+            sess.commit()
+        self.manager = SomeManager(engine=self.engine)
 
     def test_get(self):
         result = self.manager.get(1)
@@ -49,7 +46,6 @@ class BaseManagerTestCase(unittest.TestCase):
 
     def test_create(self):
         _ = self.manager.create(value="bla2")
-        self.sess.flush()
         result = self.manager.get(2)
         self.assertIsInstance(result, SomeModel)
         self.assertEqual(result.value, "bla2")
@@ -57,7 +53,6 @@ class BaseManagerTestCase(unittest.TestCase):
     def test_delete(self):
         result = self.manager.delete(id=1)
         self.assertEqual(result.value, "bla")
-        self.sess.flush()
         new = self.manager.get(id=1)
         self.assertIsNone(new)
 
@@ -65,7 +60,6 @@ class BaseManagerTestCase(unittest.TestCase):
         bad_date = dt.datetime(2000, 1, 1)
         result = self.manager.update(id=1, value="changed", updated_time=bad_date)
         self.assertEqual(result.value, "changed")
-        self.sess.flush()
         result = self.manager.get(id=1)
         self.assertEqual(result.value, "changed")
         self.assertNotEqual(result.updated_time, bad_date)
@@ -75,11 +69,10 @@ class PeriodTestCase(unittest.TestCase):
     def setUp(self):
         self.engine = create_engine("sqlite:///:memory:")
         BaseModel.metadata.create_all(self.engine)
-        self.sess = Session(self.engine)
-        self.manager = PeriodManager(sess=self.sess)
+        self.manager = PeriodManager(engine=self.engine)
 
     def test_create_blank(self):
-        result = self.manager.create()
-        self.sess.flush()
+        _ = self.manager.create()
+        result = self.manager.get(1)
         self.assertEqual(result.period_start, dt.date.today().replace(day=1))
         self.assertEqual(result.code, dt.date.today().strftime("%Y%m"))

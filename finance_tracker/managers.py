@@ -7,6 +7,7 @@ from dataclasses import dataclass
 import datetime as dt
 import logging
 
+from sqlalchemy.engine import Engine
 from sqlalchemy.orm import (
     Session,
 )
@@ -32,7 +33,7 @@ class BaseManager(ABC):
     Args:
         sess: current SQLAlchemy session
     """
-    sess: Session
+    engine: Engine
 
     @property
     @abstractmethod
@@ -40,32 +41,42 @@ class BaseManager(ABC):
         pass
 
     def get(self, id: int) -> BaseModel:
-        return self.sess.get(self.model, id)
+        with Session(self.engine) as sess:
+            result = sess.get(self.model, id)
+        return result
 
     def create(self, **data) -> BaseModel:
         new = self.model(**data)
-        _ = self.sess.add(new)
+        with Session(self.engine) as sess:
+            sess.add(new)
+            sess.commit()
         return new
 
     def delete(self, id: int) -> BaseModel:
         """
         Delete an observation and return its previous values
         """
-        result = self.get(id)
-        self.sess.delete(result)
+        with Session(self.engine) as sess:
+            result = self.get(id)
+            sess.delete(result)
+            sess.commit()
         return result
 
     def update(self, id: int, **data) -> BaseModel:
         immutable_columns = BaseModel.__annotations__.keys()
-        item = self.get(id)
-        for key, value in data.items():
-            if key in immutable_columns:
-                logger.warning(f"Key is immutable: {key}")
-                continue
-            item.__dict__[key] = value
+        with Session(self.engine) as sess:
+            item = self.get(id)
+            for key, value in data.items():
+                if key in immutable_columns:
+                    logger.warning(f"Key is immutable: {key}")
+                    continue
+                item.__setattr__(key, value)
 
-        self.sess.add(item)
-        return item
+            sess.add(item)
+            sess.commit()
+
+        result = self.get(id)
+        return result
 
 
 class AccountManager(BaseManager):

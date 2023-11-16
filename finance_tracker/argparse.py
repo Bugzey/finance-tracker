@@ -29,7 +29,12 @@ class Parser:
 
     def get_parser(self):
         parser = ArgumentParser(prog="finance_tracker")
-        subparsers = parser.add_subparsers(dest="action")
+        parser.add_argument(
+            "-d",
+            "--database",
+            help="Path to database file",
+        )
+        subparsers = parser.add_subparsers(dest="action", required=True)
         _ = self.add_action(subparsers, "create", "Create an item")
         _ = self.add_action(subparsers, "c", "Create an item")
         _ = self.add_action(subparsers, "update", "Update an item")
@@ -40,6 +45,8 @@ class Parser:
         _ = self.add_action(subparsers, "g", "Get an item")
         _ = self.add_action(subparsers, "query", "Query for items")
         _ = self.add_action(subparsers, "q", "Query for items")
+        _ = self.add_action(subparsers, "help", "Get a list of data items")
+        _ = self.add_action(subparsers, "h", "Get a list of data items")
         return parser
 
     @classmethod
@@ -49,6 +56,7 @@ class Parser:
             choices=[
                 *cls.objects, *[item[0] for item in cls.objects],
             ],
+            nargs=1,
         )
         return parser
 

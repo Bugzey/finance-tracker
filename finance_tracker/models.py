@@ -27,6 +27,16 @@ class BaseModel(DeclarativeBase):
         onupdate=func.now(),
     )
 
+    def __repr__(self):
+        name = self.__class__.__name__
+        fields = [
+            f"{item.name}='{self.__dict__[item.name]}'"
+            for item
+            in self.__table__.c
+        ]
+        result = f"{name}({', '.join(fields)})"
+        return result
+
 
 class CategoryModel(BaseModel):
     __tablename__ = "category"

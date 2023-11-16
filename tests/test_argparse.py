@@ -33,7 +33,7 @@ class ArgumentParserTestCase(unittest.TestCase):
         parser = Parser.add_objects_argument(parser)
         args = parser.parse_args(["transaction"])
         self.assertIn("object", args.__dict__)
-        self.assertEqual(args.object, "transaction")
+        self.assertEqual(args.object, ["transaction"])
 
     def test_add_action(self):
         parser = ArgumentParser(prog="test")
@@ -43,7 +43,7 @@ class ArgumentParserTestCase(unittest.TestCase):
         self.assertIn("bla", result)
         self.assertEqual(result.bla, "break")
         self.assertIn("object", result)
-        self.assertEqual(result.object, "transaction")
+        self.assertEqual(result.object, ["transaction"])
 
     def test_full(self):
         parser = Parser().get_parser()
@@ -53,7 +53,7 @@ class ArgumentParserTestCase(unittest.TestCase):
             "id=2 amount=12 category_id=1 subcategory_id=31",
         ])
         self.assertEqual(result.action, "create")
-        self.assertEqual(result.object, "transaction")
+        self.assertEqual(result.object, ["transaction"])
         self.assertEqual(
             result.data,
             {
