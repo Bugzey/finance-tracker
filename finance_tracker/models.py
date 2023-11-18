@@ -80,5 +80,5 @@ class TransactionModel(BaseModel):
     category: Mapped["CategoryModel"] = relationship()
     subcategory_id: Mapped[int] = mapped_column(ForeignKey("subcategory.id"))
     subcategory: Mapped["SubcategoryModel"] = relationship()
-    business_id: Mapped[int] = mapped_column(ForeignKey("business.id"))
+    business_id: Mapped[int | None] = mapped_column(ForeignKey("business.id"))
     business: Mapped["BusinessModel"] = relationship()

@@ -51,6 +51,8 @@ class BaseManager(ABC):
         with Session(self.engine) as sess:
             sess.add(new)
             sess.commit()
+            # Silently select?
+            _ = new.id
         return new
 
     def delete(self, id: int) -> BaseModel:
@@ -89,6 +91,8 @@ class BaseManager(ABC):
         with Session(self.engine) as sess:
             query = select(self.model).offset(offset)
             result = sess.execute(query).fetchmany(limit)
+            #   Unpack from single-length tuples
+            result = [item[0] for item in result]
 
         return result
 

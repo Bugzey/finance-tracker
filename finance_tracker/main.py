@@ -1,6 +1,7 @@
 """
 Finance tracker main module
 """
+import logging
 from pathlib import Path
 
 from sqlalchemy import create_engine
@@ -15,6 +16,8 @@ from finance_tracker.managers import (
     TransactionManager,
 )
 from finance_tracker.models import BaseModel
+
+logger = logging.getLogger(__name__)
 
 
 class DBHandler:
@@ -34,15 +37,22 @@ class DBHandler:
             self.path = path
         else:
             #   Check for standard paths
-            print("No path provided. Use a standard path?")
-            path = self.check_standard()
-            path = self.create_if_not_exists(path)
+            path = self.check_standard_paths()
+            if path:
+                logger.info(f"Using standard path: {path}")
+            else:
+                path = self.ask_which_path_to_use()
+                path = self.create_if_not_exists(path)
 
         self.path = path
         self.engine = self.create_engine(path)
         BaseModel.metadata.create_all(self.engine)
 
-    def check_standard(self):
+    def check_standard_paths(self):
+        return next((item for item in self.paths if item.exists()), None)
+
+    def ask_which_path_to_use(self):
+        print("No path provided. Use a standard path?")
         prompt = []
         for index, path in enumerate(self.paths):
             if path.exists():
@@ -128,5 +138,9 @@ def main(args):
         case _:
             raise ValueError(f"Invalid action: {args.action}")
 
-    print(result)
+    print(
+        "\n".join(str(item) for item in result)
+        if isinstance(result, list)
+        else result
+    )
     return result
