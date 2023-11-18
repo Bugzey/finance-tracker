@@ -7,6 +7,7 @@ from dataclasses import dataclass
 import datetime as dt
 import logging
 
+from sqlalchemy import select
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import (
     Session,
@@ -76,6 +77,19 @@ class BaseManager(ABC):
             sess.commit()
 
         result = self.get(id)
+        return result
+
+    def query(
+        self,
+        limit: int = 100,
+        offset: int = 0,
+        **kwargs,
+    ) -> list[BaseModel]:
+        logger.warning("Filtering query output is not yet supported")
+        with Session(self.engine) as sess:
+            query = select(self.model).offset(offset)
+            result = sess.execute(query).fetchmany(limit)
+
         return result
 
 

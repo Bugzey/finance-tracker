@@ -4,6 +4,7 @@ Database models
 
 import datetime as dt
 from decimal import Decimal
+from uuid import uuid4
 
 from sqlalchemy import (
     ForeignKey,
@@ -56,7 +57,7 @@ class AccountModel(BaseModel):
 class BusinessModel(BaseModel):
     __tablename__ = "business"
     name: Mapped[str]
-    code: Mapped[str] = mapped_column(unique=True)
+    code: Mapped[str] = mapped_column(unique=True, insert_default=lambda x: str(uuid4()))
     default_category_id: Mapped[int] = mapped_column(ForeignKey("category.id"))
     default_category: Mapped["CategoryModel"] = relationship()
     default_subcategory_id: Mapped[int] = mapped_column(ForeignKey("subcategory.id"))

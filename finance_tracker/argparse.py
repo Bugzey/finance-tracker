@@ -43,14 +43,20 @@ class Parser:
         _ = self.add_action(subparsers, "d", "Delete an item")
         _ = self.add_action(subparsers, "get", "Get an item")
         _ = self.add_action(subparsers, "g", "Get an item")
-        _ = self.add_action(subparsers, "query", "Query for items")
-        _ = self.add_action(subparsers, "q", "Query for items")
+        q1 = self.add_action(subparsers, "query", "Query for items")
+        q2 = self.add_action(subparsers, "q", "Query for items")
         _ = self.add_action(subparsers, "help", "Get a list of data items")
         _ = self.add_action(subparsers, "h", "Get a list of data items")
+
+        #   Add bonus options
+        q1.add_argument("-l", "--limit", help="How many rows to return", type=int, default=100)
+        q2.add_argument("-l", "--limit", help="How many rows to return", type=int, default=100)
+        q1.add_argument("-o", "--offset", help="How many rows to offset", type=int, default=0)
+        q2.add_argument("-o", "--offset", help="How many rows to offset", type=int, default=0)
         return parser
 
     @classmethod
-    def add_objects_argument(cls, parser: ArgumentParser):
+    def add_objects_argument(cls, parser: ArgumentParser) -> ArgumentParser:
         parser.add_argument(
             "object",
             choices=[
@@ -66,13 +72,14 @@ class Parser:
         subparsers: HasSubparsers,
         action: str,
         help: str,
-    ):
+    ) -> ArgumentParser:
         parser = subparsers.add_parser(name=action)
         parser = cls.add_objects_argument(parser)
-        parser = parser.add_argument(
+        _ = parser.add_argument(
             "data",
             help="Key-value pairs in the form KEY=VALUE",
             nargs="?",
             type=process_data,
+            default={},
         )
         return parser

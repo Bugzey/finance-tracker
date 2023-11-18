@@ -5,7 +5,6 @@ from pathlib import Path
 
 from sqlalchemy import create_engine
 from sqlalchemy.engine import Engine
-from sqlalchemy.orm import Session
 
 from finance_tracker.managers import (
     AccountManager,
@@ -31,14 +30,14 @@ class DBHandler:
     def __init__(self, path: Path = None):
         if path:
             path = Path(path).expanduser()
-            assert path.exists(), "Given path not found"
+            assert path.parent.exists(), "Given path not found"
             self.path = path
-            return
+        else:
+            #   Check for standard paths
+            print("No path provided. Use a standard path?")
+            path = self.check_standard()
+            path = self.create_if_not_exists(path)
 
-        #   Check for standard paths
-        print("No path provided. Use a standard path?")
-        path = self.check_standard()
-        path = self.create_if_not_exists(path)
         self.path = path
         self.engine = self.create_engine(path)
         BaseModel.metadata.create_all(self.engine)
@@ -89,17 +88,17 @@ def main(args):
     )
 
     match args.object:
-        case "account":
+        case "account" | "a":
             manager = AccountManager
-        case "business":
+        case "business" | "b":
             manager = BusinessManager
-        case "category":
+        case "category" | "c":
             manager = CategoryManager
-        case "period":
+        case "period" | "p":
             manager = PeriodManager
-        case "subcategory":
+        case "subcategory" | "s":
             manager = SubcategoryManager
-        case "transaction":
+        case "transaction" | "t":
             manager = TransactionManager
         case _:
             raise ValueError(f"Invalid object: {args.object}")
@@ -107,7 +106,7 @@ def main(args):
     manager = manager(db_handler.engine)
 
     match args.action:
-        case "help":
+        case "help" | "h":
             fields = {
                 item.name: item.type
                 for item
@@ -116,16 +115,16 @@ def main(args):
             }
             print(f"{args.object} possible data: {fields}")
             return
-        case "create":
+        case "create" | "c":
             result = manager.create(**args.data)
-        case "get":
+        case "get" | "g":
             result = manager.get(**args.data)
-        case "update":
+        case "update" | "u":
             result = manager.update(**args.data)
-        case "delete":
+        case "delete" | "d":
             result = manager.delete(**args.data)
-        case "query":
-            result = manager.query(**args.data)
+        case "query" | "q":
+            result = manager.query(args.limit, args.offset, **args.data)
         case _:
             raise ValueError(f"Invalid action: {args.action}")
 
