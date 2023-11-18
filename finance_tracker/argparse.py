@@ -78,7 +78,7 @@ class Parser:
         _ = parser.add_argument(
             "data",
             help="Key-value pairs in the form KEY=VALUE",
-            nargs="?",
+            nargs="*",
             type=process_data,
             default={},
         )

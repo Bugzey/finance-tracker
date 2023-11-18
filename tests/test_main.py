@@ -2,6 +2,7 @@
 Main unit tests
 """
 
+from sqlalchemy import create_engine
 import tempfile
 from types import SimpleNamespace
 import unittest
@@ -10,23 +11,50 @@ from finance_tracker.main import (
     DBHandler,
     main,
 )
+from finance_tracker.managers import (
+    CategoryManager,
+    AccountManager,
+)
 from finance_tracker.models import (
+    BaseModel,
     TransactionModel,
 )
+
+
+class DBHandlerTestCase(unittest.TestCase):
+    def setUp(self):
+        self.engine = create_engine("sqlite+pysqlite:///:memory:")
+        BaseModel.metadata.create_all(self.engine)
+
+    def test_initial_setup(self):
+        DBHandler.initial_setup(self.engine)
+
+        accounts = AccountManager(self.engine).query()
+        self.assertEqual(len(accounts), 1)
+        self.assertTrue(
+            any(item.name.casefold() == "me" for item in accounts)
+        )
+
+        categories = CategoryManager(self.engine).query()
+        self.assertTrue(
+            any(item.name == "Entertainment" for item in categories)
+        )
 
 
 class MainTestCase(unittest.TestCase):
     def setUp(self):
         self.db = tempfile.NamedTemporaryFile()
+        self.engine = create_engine(f"sqlite+pysqlite:///{self.db.name}")
+        BaseModel.metadata.create_all(self.engine)
 
-    def test_main_manual(self):
+    def test_main_pre_existing(self):
         #   Create a category
         main(
             SimpleNamespace(
                 database=self.db.name,
                 action="create",
                 object="category",
-                data={"name": "test_cat"},
+                data=[{"name": "test_cat"}],
             )
         )
 
@@ -36,7 +64,7 @@ class MainTestCase(unittest.TestCase):
                 database=self.db.name,
                 action="create",
                 object="subcategory",
-                data={"name": "test_sub"},
+                data=[{"name": "test_sub", "category_id": 1}],
             )
         )
 
@@ -46,7 +74,7 @@ class MainTestCase(unittest.TestCase):
                 database=self.db.name,
                 action="create",
                 object="account",
-                data={"name": "test_acc"},
+                data=[{"name": "test_acc"}],
             )
         )
 
@@ -56,12 +84,12 @@ class MainTestCase(unittest.TestCase):
                 database=self.db.name,
                 action="create",
                 object="transaction",
-                data={
-                    "amount": 12.54,
-                    "account_id": 1,
-                    "category_id": 1,
-                    "subcategory_id": 1,
-                },
+                data=[
+                    {"amount": 12.54},
+                    {"account_id": 1},
+                    {"category_id": 1},
+                    {"subcategory_id": 1},
+                ],
             )
         )
 
@@ -73,7 +101,7 @@ class MainTestCase(unittest.TestCase):
                 object="transaction",
                 limit=10,
                 offset=0,
-                data={},
+                data=[],
             )
         )
         self.assertIsInstance(result, list)

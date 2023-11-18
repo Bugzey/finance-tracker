@@ -87,9 +87,14 @@ class BaseManager(ABC):
         offset: int = 0,
         **kwargs,
     ) -> list[BaseModel]:
-        logger.warning("Filtering query output is not yet supported")
         with Session(self.engine) as sess:
-            query = select(self.model).offset(offset)
+            query = select(self.model)
+
+            for key, value in kwargs.items():
+                query = query.where(self.model.__dict__[key] == value)
+
+            query = query.offset(offset)
+
             result = sess.execute(query).fetchmany(limit)
             #   Unpack from single-length tuples
             result = [item[0] for item in result]

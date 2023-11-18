@@ -40,7 +40,10 @@ class TransactionTestCase(TestBase):
         super().setUp()
         self.account = AccountModel(name="account")
         self.category = CategoryModel(name="category")
-        self.subcategory = SubcategoryModel(name="subcategory")
+        self.subcategory = SubcategoryModel(
+            name="subcategory",
+            category=self.category,
+        )
         self.business = BusinessModel(
             name="business",
             code="blabla123",

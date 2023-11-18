@@ -3,6 +3,7 @@ Finance tracker main module
 """
 import logging
 from pathlib import Path
+from typing import Any
 
 from sqlalchemy import create_engine
 from sqlalchemy.engine import Engine
@@ -20,6 +21,27 @@ from finance_tracker.models import BaseModel
 logger = logging.getLogger(__name__)
 
 
+def interact(prompt: str, choices: list[Any]) -> Any:
+    """
+    Ask the user a question, provide choices in a menu-like fashion numbering options and return the
+    answer corresponding to one of the choices
+    """
+    print(prompt)
+    items = [f"{index+1}: {item}" for index, item in enumerate(choices)]
+
+    print("\n".join(items))
+    while True:
+        index = input(f"Which path to use? 1-{len(items)}: ")
+        if index.isnumeric():
+            index = int(index)
+            break
+
+        print(f"Invalid input: {index}")
+
+    result = choices[index-1]
+    return result
+
+
 class DBHandler:
     engine: Engine
     path: Path
@@ -33,43 +55,30 @@ class DBHandler:
     def __init__(self, path: Path = None):
         if path:
             path = Path(path).expanduser()
-            assert path.parent.exists(), "Given path not found"
-            self.path = path
+
+        if path and path.exists():
+            pass
+        if self.check_standard_paths():
+            path = Path(self.check_standard_paths()).expanduser()
+            logger.info(f"Using existing standard path: {path}")
         else:
-            #   Check for standard paths
-            path = self.check_standard_paths()
-            if path:
-                logger.info(f"Using standard path: {path}")
-            else:
-                path = self.ask_which_path_to_use()
-                path = self.create_if_not_exists(path)
+            path = path or self.ask_which_path_to_use()
+            path = Path(path).expanduser()
+            self.create_if_not_exists(path)
+            self.engine = self.create_engine(path)
+            BaseModel.metadata.create_all(self.engine)
+            if interact("Use default objects?", ["Yes", "No"]) == "Yes":
+                self.initial_setup(engine=self.engine)
 
         self.path = path
         self.engine = self.create_engine(path)
-        BaseModel.metadata.create_all(self.engine)
 
     def check_standard_paths(self):
         return next((item for item in self.paths if item.exists()), None)
 
     def ask_which_path_to_use(self):
-        print("No path provided. Use a standard path?")
-        prompt = []
-        for index, path in enumerate(self.paths):
-            if path.exists():
-                prompt.append(f"{index+1}: {path}: FOUND")
-            else:
-                prompt.append(f"{index+1}: {path}: missing")
-
-        print("\n".join(prompt))
-        while True:
-            index = input(f"Which path to use? 1-{len(self.paths)}: ")
-            if index.isnumeric():
-                index = int(index)
-                break
-
-            print(f"Invalid input: {index}")
-
-        result = self.paths[index-1]
+        prompt = "No path provided. Use a standard path?"
+        result = interact(prompt, self.paths)
         return result
 
     def create_if_not_exists(self, path: Path):
@@ -81,6 +90,24 @@ class DBHandler:
     def create_engine(self, path: Path):
         engine = create_engine(f"sqlite+pysqlite:///{str(path)}")
         return engine
+
+    @staticmethod
+    def initial_setup(engine: Engine):
+        from finance_tracker.default_data import category, subcategory, account
+        _ = [AccountManager(engine).create(**data) for data in account]
+        ex_cat = {
+            data["name"]: CategoryManager(engine).create(**data).id
+            for data
+            in category
+        }
+        [
+            SubcategoryManager(engine).create(
+                **data, category_id=category_id,
+            )
+            for item, category_id
+            in ex_cat.items()
+            for data in subcategory[item]
+        ]
 
 
 def main(args):
@@ -96,6 +123,14 @@ def main(args):
         if isinstance(args.object, list)
         else args.object
     )
+
+    #   Combine data
+    args.data = {
+        key: value
+        for item in args.data
+        for key, value
+        in item.items()
+    }
 
     match args.object:
         case "account" | "a":

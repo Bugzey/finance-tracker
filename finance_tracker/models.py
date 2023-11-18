@@ -46,7 +46,9 @@ class CategoryModel(BaseModel):
 
 class SubcategoryModel(BaseModel):
     __tablename__ = "subcategory"
-    name: Mapped[str] = mapped_column(unique=True)
+    name: Mapped[str] = mapped_column()
+    category_id: Mapped[int] = mapped_column(ForeignKey("category.id"))
+    category: Mapped["CategoryModel"] = relationship()
 
 
 class AccountModel(BaseModel):

@@ -50,16 +50,19 @@ class ArgumentParserTestCase(unittest.TestCase):
         result = parser.parse_args([
             "create",
             "transaction",
-            "id=2 amount=12 category_id=1 subcategory_id=31",
+            "id=2",
+            "amount=12",
+            "category_id=1",
+            "subcategory_id=31",
         ])
         self.assertEqual(result.action, "create")
         self.assertEqual(result.object, ["transaction"])
         self.assertEqual(
             result.data,
-            {
-                "id": "2",
-                "amount": "12",
-                "category_id": "1",
-                "subcategory_id": "31",
-            },
+            [
+                {"id": "2"},
+                {"amount": "12"},
+                {"category_id": "1"},
+                {"subcategory_id": "31"},
+            ],
         )
