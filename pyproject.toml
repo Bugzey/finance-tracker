@@ -1,0 +1,81 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "finance_tracker"
+version = "0.1.0"
+description = "Lightweight command-line program to manage personal finances with added support for reading receipt QR codes"
+readme = "README.md"
+requires-python = ">=3.11"
+license = {file = "LICENSE.md"}
+authors = [
+	{name = "Radoslav Dimitrov", email = "radddi@abv.bg"},
+]
+dependencies = [
+	"sqlalchemy~=2.0",
+]
+
+[project.optional-dependencies]
+optional_dependency_name = [
+]
+
+[project.urls]
+homepage = "https://github.com/Bugzey/finance-tracker"
+
+[project.scripts]
+finance_tracker = "finance_tracker.__main__:main"
+
+[project.gui-scripts]
+
+[tool.setuptools.packages.find]
+# All the following settings are optional:
+where = ["."]  # ["."] by default
+include = ["*"]  # ["*"] by default
+exclude = ["tests", "utils"]  # empty by default
+namespaces = false  # true by default
+
+[tool.pylint.main]
+ignore = "tests"
+jobs = 4
+
+[tool.pylint."messages control"]
+disable = [
+	"wildcard-import",
+	"trailing-newlines",
+	"use-dict-literal",
+]
+
+good-names = [
+	"i",
+	"j",
+	"k",
+	"ex",
+	"Run",
+	"_",
+	"pd",
+	"df",
+	"ok",
+]
+
+[tool.flake8]
+exclude = [
+	"*__init__.py",
+	"*__main__.py",
+]
+max-line-length = 100
+ignore = [
+	"E123", "E704", "E121", "W504", "E24", "W503", "E226", "E126", "E203"
+]
+verbose = true
+
+[tool.pytest.ini_options]
+markers = [
+	"integtest: marks integration tests"
+]
+
+[tool.black]
+diff = true
+line-length = 100
+extend-exclude = ".*ipynb"
+check = true

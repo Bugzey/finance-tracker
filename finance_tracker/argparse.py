@@ -1,0 +1,85 @@
+from argparse import ArgumentParser
+import shlex
+
+
+class HasSubparsers:
+    def add_parser(*args, **kwargs):
+        pass
+
+
+def process_data(data: str):
+    data = shlex.split(data)
+    result = {}
+    for item in data:
+        key, value = item.split("=", 1)
+        result[key] = value
+
+    return result
+
+
+class Parser:
+    objects = (
+        "transaction",
+        "category",
+        "subcategory",
+        "account",
+        "business",
+        "period",
+    )
+
+    def get_parser(self):
+        parser = ArgumentParser(prog="finance_tracker")
+        parser.add_argument(
+            "-d",
+            "--database",
+            help="Path to database file",
+        )
+        subparsers = parser.add_subparsers(dest="action", required=True)
+        _ = self.add_action(subparsers, "create", "Create an item")
+        _ = self.add_action(subparsers, "c", "Create an item")
+        _ = self.add_action(subparsers, "update", "Update an item")
+        _ = self.add_action(subparsers, "u", "Update an item")
+        _ = self.add_action(subparsers, "delete", "Delete an item")
+        _ = self.add_action(subparsers, "d", "Delete an item")
+        _ = self.add_action(subparsers, "get", "Get an item")
+        _ = self.add_action(subparsers, "g", "Get an item")
+        q1 = self.add_action(subparsers, "query", "Query for items")
+        q2 = self.add_action(subparsers, "q", "Query for items")
+        _ = self.add_action(subparsers, "help", "Get a list of data items")
+        _ = self.add_action(subparsers, "h", "Get a list of data items")
+
+        #   Add bonus options
+        q1.add_argument("-l", "--limit", help="How many rows to return", type=int, default=100)
+        q2.add_argument("-l", "--limit", help="How many rows to return", type=int, default=100)
+        q1.add_argument("-o", "--offset", help="How many rows to offset", type=int, default=0)
+        q2.add_argument("-o", "--offset", help="How many rows to offset", type=int, default=0)
+        return parser
+
+    @classmethod
+    def add_objects_argument(cls, parser: ArgumentParser) -> ArgumentParser:
+        parser.add_argument(
+            "object",
+            choices=[
+                *cls.objects, *[item[0] for item in cls.objects],
+            ],
+            nargs=1,
+        )
+        return parser
+
+    @classmethod
+    def add_action(
+        cls,
+        subparsers: HasSubparsers,
+        action: str,
+        help: str,
+    ) -> ArgumentParser:
+        parser = subparsers.add_parser(name=action)
+        parser = cls.add_objects_argument(parser)
+        _ = parser.add_argument(
+            "data",
+            help="Key-value pairs in the form KEY=VALUE",
+            nargs="*",
+            type=process_data,
+            default={},
+        )
+        return parser
