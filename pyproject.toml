@@ -3,16 +3,17 @@ requires = ["setuptools", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "package_name"
+name = "finance_tracker"
 version = "0.1.0"
-description = "Package description"
+description = "Lightweight command-line program to manage personal finances with added support for reading receipt QR codes"
 readme = "README.md"
-requires-python = ">=3.9"
-license = {text = "INDEAVR"}
+requires-python = ">=3.11"
+license = {file = "LICENSE.md"}
 authors = [
-	{name = "author name", email = "author_email@example.com"},
+	{name = "Radoslav Dimitrov", email = "radddi@abv.bg"},
 ]
 dependencies = [
+	"sqlalchemy~=2.0",
 ]
 
 [project.optional-dependencies]
@@ -20,9 +21,10 @@ optional_dependency_name = [
 ]
 
 [project.urls]
-homepage = "http://example.com"
+homepage = "https://github.com/Bugzey/finance-tracker"
 
 [project.scripts]
+finance_tracker = "finance_tracker.__main__:main"
 
 [project.gui-scripts]
 
