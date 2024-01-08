@@ -109,6 +109,9 @@ class AccountManager(BaseManager):
 class BusinessManager(BaseManager):
     model = BusinessModel
 
+    def from_qr_code(self, code: str):
+        pass
+
 
 class CategoryManager(BaseManager):
     model = CategoryModel
