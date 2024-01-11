@@ -22,6 +22,10 @@ from finance_tracker.models import (
     PeriodModel,
     TransactionModel,
 )
+from finance_tracker.qr_handler import (
+    QRData,
+    get_qr_from_video,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -109,8 +113,12 @@ class AccountManager(BaseManager):
 class BusinessManager(BaseManager):
     model = BusinessModel
 
-    def from_qr_code(self, code: str):
-        pass
+    def from_qr_code(self, qrdata: QRData, **data):
+        data = {
+            **data,
+            "code": qrdata.business_code,
+        }
+        return self.create(**data)
 
 
 class CategoryManager(BaseManager):
