@@ -57,8 +57,8 @@ class DBHandler:
             path = Path(path).expanduser()
 
         if path and path.exists():
-            pass
-        if self.check_standard_paths():
+            logger.info(f"Using provided path: {path}")
+        elif self.check_standard_paths():
             path = Path(self.check_standard_paths()).expanduser()
             logger.info(f"Using existing standard path: {path}")
         else:

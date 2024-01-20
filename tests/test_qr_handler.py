@@ -31,7 +31,7 @@ class QRDataTestCase(unittest.TestCase):
         }
 
     def test_init(self):
-        result = QRData(**self.raw_data)
+        result = QRData(**self.data)
         self.assertIsInstance(result, QRData)
         self.assertAlmostEqual(asdict(result), self.data)
 

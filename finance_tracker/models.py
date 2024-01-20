@@ -84,3 +84,5 @@ class TransactionModel(BaseModel):
     subcategory: Mapped["SubcategoryModel"] = relationship()
     business_id: Mapped[int | None] = mapped_column(ForeignKey("business.id"))
     business: Mapped["BusinessModel"] = relationship()
+    period_id: Mapped[int] = mapped_column(ForeignKey("period.id"))
+    period: Mapped["PeriodModel"] = relationship()

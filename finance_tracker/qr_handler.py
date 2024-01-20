@@ -58,10 +58,7 @@ class QRData:
         """
         Apply type handling
         """
-        self.date = dt.date.fromisoformat(self.date)
-        self.time = dt.time.fromisoformat(self.time)
-        self.amount = float(self.amount)
-        self.datetime = dt.datetime(
+        self.datetime = self.datetime or dt.datetime(
             self.date.year,
             self.date.month,
             self.date.day,
@@ -75,4 +72,13 @@ class QRData:
         items = data.split("*")
         if len(items) != 5:
             raise ValueError(f"Unknown QR format: {data}. Expected: {QR_FORMAT}")
-        return cls(*items)
+
+        items = {
+            key: value
+            for key, value
+            in zip(("business_code", "transaction_code", "date", "time", "amount"), items)
+        }
+        items["date"] = dt.date.fromisoformat(items["date"])
+        items["time"] = dt.time.fromisoformat(items["time"])
+        items["amount"] = float(items["amount"])
+        return cls(**items)

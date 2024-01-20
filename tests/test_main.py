@@ -47,6 +47,9 @@ class MainTestCase(unittest.TestCase):
         self.engine = create_engine(f"sqlite+pysqlite:///{self.db.name}")
         BaseModel.metadata.create_all(self.engine)
 
+    def tearDown(self):
+        self.db.close()
+
     def test_main_pre_existing(self):
         #   Create a category
         main(
