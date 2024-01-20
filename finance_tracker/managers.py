@@ -154,6 +154,33 @@ class TransactionManager(BaseManager):
     #   1. Disable delete
     #   2. Cancelling a transaction creates a new transaction for the negative sum
 
+    def create(self, **data):
+        """
+        Handle dates if they are not given
+        """
+        if data.get("period_id"):
+            return super().create(**data)
+
+        #   Get or create the period corresponding to the transaction date or today
+        period_manager = PeriodManager(self.engine)
+
+        if data.get("transaction_date"):
+            logger.info(f"Using period for date: {data['transaction_date']}")
+            period_start = dt.date(data["date"].year, data["date"].month, 1)
+        else:
+            logger.info("Using period for today")
+            period_start = None
+
+        period = period_manager.query(
+            period_start=period_start,
+        )
+        period = period[0] if period else None
+        if not period:
+            period = period_manager.create()  # Today
+
+        data["period_id"] = period.id
+        return super().create(**data)
+
     def from_qr_code(self, qrdata: QRData, **data):
         business = BusinessManager(engine=self.engine).query(code=qrdata.business_code)
         business = business[0] if business else business

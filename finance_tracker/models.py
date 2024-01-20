@@ -76,6 +76,7 @@ class PeriodModel(BaseModel):
 class TransactionModel(BaseModel):
     __tablename__ = "transaction"
     amount: Mapped[Decimal]
+    transaction_date: Mapped[dt.date | None]
     account_id: Mapped[int] = mapped_column(ForeignKey("account.id"))
     account: Mapped["AccountModel"] = relationship()
     category_id: Mapped[int] = mapped_column(ForeignKey("category.id"))
