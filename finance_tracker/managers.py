@@ -114,8 +114,8 @@ class BusinessManager(BaseManager):
 
     def from_qr_code(self, qrdata: QRData, **data):
         data = {
-            **data,
             "code": qrdata.business_code,
+            **data,
         }
         return self.create(**data)
 
@@ -198,6 +198,8 @@ class TransactionManager(BaseManager):
         #   Data given last so that it can override QR Code values
         data = {
             "amount": qrdata.amount,
+            "code": f"{qrdata.business_code}-{qrdata.transaction_code}",
+            "transaction_date": qrdata.date,
             "business_id": business.id,
             "period_id": period.id,
             "category_id": business.default_category_id,

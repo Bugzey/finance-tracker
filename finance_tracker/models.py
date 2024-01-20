@@ -75,6 +75,7 @@ class PeriodModel(BaseModel):
 
 class TransactionModel(BaseModel):
     __tablename__ = "transaction"
+    code: Mapped[str] = mapped_column(unique=True, insert_default=lambda x: str(uuid4()))
     amount: Mapped[Decimal]
     transaction_date: Mapped[dt.date | None]
     account_id: Mapped[int] = mapped_column(ForeignKey("account.id"))

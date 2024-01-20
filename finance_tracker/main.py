@@ -8,6 +8,10 @@ from typing import Any
 from sqlalchemy import create_engine
 from sqlalchemy.engine import Engine
 
+from finance_tracker.qr_handler import (
+    get_qr_from_video,
+    QRData,
+)
 from finance_tracker.managers import (
     AccountManager,
     BusinessManager,
@@ -161,7 +165,15 @@ def main(args):
             print(f"{args.object} possible data: {fields}")
             return
         case "create" | "c":
-            result = manager.create(**args.data)
+            if args.qr_code:
+                if args.object not in ["business", "b", "transaction", "t"]:
+                    raise ValueError(
+                        "QR Code flow only available for business and transaction"
+                    )
+                qrdata = QRData.from_string(get_qr_from_video())
+                result = manager.from_qr_code(qrdata, **args.data)
+            else:
+                result = manager.create(**args.data)
         case "get" | "g":
             result = manager.get(**args.data)
         case "update" | "u":
