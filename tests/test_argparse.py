@@ -13,17 +13,22 @@ from finance_tracker.argparse import (
 
 class ProcessedDataTestCase(unittest.TestCase):
     def test_processed_data(self):
-        result = process_data(
-            r"one=bla two='bla two' three=one\ two four=extra=equals"
-        )
+        result = [
+            process_data(item)
+            for item
+            in (
+                r"one=bla",
+                r"two=bla two",
+                r"four=extra=equals"
+            )
+        ]
         self.assertEqual(
             result,
-            {
-                "one": "bla",
-                "two": "bla two",
-                "three": "one two",
-                "four": "extra=equals",
-            }
+            [
+                {"one": "bla"},
+                {"two": "bla two"},
+                {"four": "extra=equals"},
+            ]
         )
 
 

@@ -23,6 +23,10 @@ from finance_tracker.managers import (
 from finance_tracker.models import BaseModel
 
 logger = logging.getLogger(__name__)
+handler = logging.StreamHandler()
+formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(module)s - %(funcName)s - %(msg)s")
+handler.setFormatter(formatter)
+logger.addHandler(handler)
 
 
 def interact(prompt: str, choices: list[Any]) -> Any:
@@ -62,11 +66,12 @@ class DBHandler:
 
         if path and path.exists():
             logger.info(f"Using provided path: {path}")
-        elif self.check_standard_paths():
+        elif not path and self.check_standard_paths():
             path = Path(self.check_standard_paths()).expanduser()
             logger.info(f"Using existing standard path: {path}")
         else:
             path = path or self.ask_which_path_to_use()
+            logger.info(f"Setting up database: {path}")
             path = Path(path).expanduser()
             self.create_if_not_exists(path)
             self.engine = self.create_engine(path)
@@ -74,6 +79,7 @@ class DBHandler:
             if interact("Use default objects?", ["Yes", "No"]) == "Yes":
                 self.initial_setup(engine=self.engine)
 
+        print(f"Using path: {path}")
         self.path = path
         self.engine = self.create_engine(path)
 
@@ -121,6 +127,7 @@ def main(args):
     1. action - create, update, delete, get, query
     2. object - what to apply the action to
     """
+    logger.setLevel(logging.DEBUG if args.verbose else logging.WARNING)
     db_handler = DBHandler(path=args.database)
     args.object = (
         args.object[0]

@@ -58,6 +58,7 @@ class MainTestCase(unittest.TestCase):
                 action="create",
                 object="category",
                 qr_code=False,
+                verbose=True,
                 data=[{"name": "test_cat"}],
             )
         )
@@ -69,6 +70,7 @@ class MainTestCase(unittest.TestCase):
                 action="create",
                 object="subcategory",
                 qr_code=False,
+                verbose=True,
                 data=[{"name": "test_sub", "category_id": 1}],
             )
         )
@@ -80,6 +82,7 @@ class MainTestCase(unittest.TestCase):
                 action="create",
                 object="account",
                 qr_code=False,
+                verbose=True,
                 data=[{"name": "test_acc"}],
             )
         )
@@ -91,6 +94,7 @@ class MainTestCase(unittest.TestCase):
                 action="create",
                 object="transaction",
                 qr_code=False,
+                verbose=True,
                 data=[
                     {"amount": 12.54},
                     {"account_id": 1},
@@ -108,6 +112,7 @@ class MainTestCase(unittest.TestCase):
                 object="transaction",
                 limit=10,
                 offset=0,
+                verbose=True,
                 data=[],
             )
         )
