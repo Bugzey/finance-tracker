@@ -166,7 +166,13 @@ class TransactionManager(BaseManager):
 
         if data.get("transaction_date"):
             logger.info(f"Using period for date: {data['transaction_date']}")
-            period_start = dt.date(data["date"].year, data["date"].month, 1)
+            transaction_date = dt.date.fromisoformat(data["transaction_date"])
+            data["transaction_date"] = transaction_date
+            period_start = dt.date(
+               transaction_date.year,
+               transaction_date.month,
+               1,
+            )
         else:
             logger.info("Using period for today")
             period_start = None
