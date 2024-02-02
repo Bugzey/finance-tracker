@@ -158,33 +158,47 @@ class TransactionManager(BaseManager):
         """
         Handle dates if they are not given
         """
-        if data.get("period_id"):
-            return super().create(**data)
+        #   Handle periods
+        if not data.get("period_id"):
 
-        #   Get or create the period corresponding to the transaction date or today
-        period_manager = PeriodManager(self.engine)
+            #   Get or create the period corresponding to the transaction date or today
+            period_manager = PeriodManager(self.engine)
 
-        if data.get("transaction_date"):
-            logger.info(f"Using period for date: {data['transaction_date']}")
-            transaction_date = dt.date.fromisoformat(data["transaction_date"])
-            data["transaction_date"] = transaction_date
-            period_start = dt.date(
-               transaction_date.year,
-               transaction_date.month,
-               1,
+            if data.get("transaction_date"):
+                logger.info(f"Using period for date: {data['transaction_date']}")
+                transaction_date = dt.date.fromisoformat(data["transaction_date"])
+                data["transaction_date"] = transaction_date
+                period_start = dt.date(
+                   transaction_date.year,
+                   transaction_date.month,
+                   1,
+                )
+            else:
+                logger.info("Using period for today")
+                period_start = None
+
+            period = period_manager.query(
+                period_start=period_start,
             )
-        else:
-            logger.info("Using period for today")
-            period_start = None
+            period = period[0] if period else None
+            if not period:
+                period = period_manager.create()  # Today
 
-        period = period_manager.query(
-            period_start=period_start,
-        )
-        period = period[0] if period else None
-        if not period:
-            period = period_manager.create()  # Today
+            data["period_id"] = period.id
 
-        data["period_id"] = period.id
+        #   Use business categories if not given
+        if (
+            data.get("business_id")
+            and (
+                not data.get("category_id")
+                or not data.get("subcategory_id")
+            )
+        ):
+            business_manager = BusinessManager(self.engine)
+            business = business_manager.get(data.get("business_id"))
+            data["category_id"] = data.get("category_id", business.default_category_id)
+            data["subcategory_id"] = data.get("subcategory_id", business.default_subcategory_id)
+
         return super().create(**data)
 
     def from_qr_code(self, qrdata: QRData, **data):

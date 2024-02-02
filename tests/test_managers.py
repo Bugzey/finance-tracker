@@ -167,3 +167,14 @@ class TransactionManagerTestCase(unittest.TestCase):
         self.assertEqual(tran.subcategory_id, new_sub.id)
         self.assertEqual(tran.period_id, new_per.id)
         self.assertAlmostEqual(float(tran.amount), 12.91)
+
+    def test_category_from_business(self):
+        result = TransactionManager(self.engine).create(
+            account_id=self.account.id,
+            amount=12.91,
+            transaction_date="2023-01-01",
+            business_id=1,
+        )
+        self.assertIsInstance(result, TransactionModel)
+        self.assertEqual(result.category_id, self.category.id)
+        self.assertEqual(result.subcategory_id, self.subcategory.id)
