@@ -178,3 +178,23 @@ class TransactionManagerTestCase(unittest.TestCase):
         self.assertIsInstance(result, TransactionModel)
         self.assertEqual(result.category_id, self.category.id)
         self.assertEqual(result.subcategory_id, self.subcategory.id)
+
+    def test_automatic_period_creation(self):
+        transaction_manager = TransactionManager(self.engine)
+        transaction_manager.create(
+            business_id=1,
+            account_id=1,
+            transaction_date="2024-01-01",
+            amount=20,
+        )
+        transaction_manager.create(
+            business_id=1,
+            account_id=1,
+            transaction_date="2024-02-01",
+            amount=20,
+        )
+        period_manager = PeriodManager(self.engine)
+        periods = period_manager.query()
+        self.assertGreater(len(periods), 2)
+        self.assertEqual(periods[1].period_start, dt.date(2024, 1, 1))
+        self.assertEqual(periods[2].period_start, dt.date(2024, 2, 1))
