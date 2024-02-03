@@ -68,7 +68,7 @@ class BusinessModel(BaseModel):
 
 class PeriodModel(BaseModel):
     __tablename__ = "period"
-    code: Mapped[str]
+    code: Mapped[str] = mapped_column(unique=True)
     period_start: Mapped[dt.date]
     period_end: Mapped[dt.date]
 

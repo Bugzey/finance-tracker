@@ -132,7 +132,7 @@ class PeriodManager(BaseManager):
     model = PeriodModel
 
     def create(self, **data):
-        period_start: dt.date = data.get("period_start", dt.date.today().replace(day=1))
+        period_start: dt.date = data.get("period_start") or dt.date.today().replace(day=1)
 
         if period_start.month == 12:
             period_end = (
@@ -182,7 +182,7 @@ class TransactionManager(BaseManager):
             )
             period = period[0] if period else None
             if not period:
-                period = period_manager.create()  # Today
+                period = period_manager.create(period_start=period_start)  # Today
 
             data["period_id"] = period.id
 
