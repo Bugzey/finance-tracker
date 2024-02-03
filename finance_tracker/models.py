@@ -75,7 +75,9 @@ class PeriodModel(BaseModel):
 
 class TransactionModel(BaseModel):
     __tablename__ = "transaction"
+    code: Mapped[str] = mapped_column(unique=True, insert_default=lambda x: str(uuid4()))
     amount: Mapped[Decimal]
+    transaction_date: Mapped[dt.date | None]
     account_id: Mapped[int] = mapped_column(ForeignKey("account.id"))
     account: Mapped["AccountModel"] = relationship()
     category_id: Mapped[int] = mapped_column(ForeignKey("category.id"))
@@ -84,3 +86,5 @@ class TransactionModel(BaseModel):
     subcategory: Mapped["SubcategoryModel"] = relationship()
     business_id: Mapped[int | None] = mapped_column(ForeignKey("business.id"))
     business: Mapped["BusinessModel"] = relationship()
+    period_id: Mapped[int] = mapped_column(ForeignKey("period.id"))
+    period: Mapped["PeriodModel"] = relationship()

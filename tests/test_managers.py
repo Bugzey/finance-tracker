@@ -13,11 +13,19 @@ from sqlalchemy.orm import (
 
 from finance_tracker.models import (
     BaseModel,
+    BusinessModel,
+    TransactionModel,
 )
 from finance_tracker.managers import (
     BaseManager,
+    AccountManager,
+    BusinessManager,
+    CategoryManager,
+    SubcategoryManager,
     PeriodManager,
+    TransactionManager,
 )
+from finance_tracker.qr_handler import QRData
 
 
 class SomeModel(BaseModel):
@@ -65,6 +73,30 @@ class BaseManagerTestCase(unittest.TestCase):
         self.assertNotEqual(result.updated_time, bad_date)
 
 
+class BusinessManagerTestCase(unittest.TestCase):
+    def setUp(self):
+        self.engine = create_engine("sqlite:///:memory:")
+        BaseModel.metadata.create_all(self.engine)
+        self.manager = BusinessManager(engine=self.engine)
+
+    def test_from_qr_code_good(self):
+        qr_data = QRData(
+            business_code="some_code",
+            transaction_code="bla",
+            date=dt.date(2020, 1, 1),
+            time=dt.time(0, 1, 23),
+            amount=12.3,
+        )
+        result = self.manager.from_qr_code(
+            qr_data,
+            name="some_business",
+            default_category_id=1,
+            default_subcategory_id=1,
+        )
+        self.assertIsInstance(result, BusinessModel)
+        self.assertEqual(result.code, "some_code")
+
+
 class PeriodTestCase(unittest.TestCase):
     def setUp(self):
         self.engine = create_engine("sqlite:///:memory:")
@@ -76,3 +108,73 @@ class PeriodTestCase(unittest.TestCase):
         result = self.manager.get(1)
         self.assertEqual(result.period_start, dt.date.today().replace(day=1))
         self.assertEqual(result.code, dt.date.today().strftime("%Y%m"))
+
+
+class TransactionManagerTestCase(unittest.TestCase):
+    def setUp(self):
+        self.engine = create_engine("sqlite:///:memory:")
+        BaseModel.metadata.create_all(self.engine)
+        self.account = AccountManager(self.engine).create(name="Account")
+        self.period = PeriodManager(self.engine).create(period_start=dt.date(2022, 1, 1))
+        self.category = CategoryManager(self.engine).create(name="Daily life")
+        self.subcategory = SubcategoryManager(self.engine).create(
+            name="Food",
+            category_id=self.category.id,
+        )
+        self.business = BusinessManager(self.engine).create(
+            name="Some business",
+            code="bla1",
+            default_category_id=self.category.id,
+            default_subcategory_id=self.subcategory.id,
+        )
+        self.qrdata = QRData(
+            business_code=self.business.code,
+            transaction_code="123",
+            date=dt.date(2022, 1, 12),
+            time=dt.time(0, 1, 12),
+            amount=59.99,
+        )
+
+    def test_from_qr_full(self):
+        tran = TransactionManager(self.engine).from_qr_code(
+            qrdata=self.qrdata,
+            account_id=self.account.id,
+        )
+        self.assertIsInstance(tran, TransactionModel)
+        self.assertEqual(tran.account_id, self.account.id)
+        self.assertEqual(tran.business_id, self.business.id)
+        self.assertEqual(tran.category_id, self.category.id)
+        self.assertEqual(tran.subcategory_id, self.subcategory.id)
+        self.assertEqual(tran.period_id, self.period.id)
+
+    def test_from_qr_override(self):
+        new_cat = CategoryManager(self.engine).create(name="second")
+        new_sub = SubcategoryManager(self.engine).create(name="second", category_id=2)
+        new_per = PeriodManager(self.engine).create(period_start=dt.date(2022, 12, 1))
+
+        tran = TransactionManager(self.engine).from_qr_code(
+            qrdata=self.qrdata,
+            account_id=self.account.id,
+            category_id=2,
+            subcategory_id=2,
+            period_id=2,
+            amount=12.91,
+        )
+        self.assertIsInstance(tran, TransactionModel)
+        self.assertEqual(tran.account_id, self.account.id)
+        self.assertEqual(tran.business_id, self.business.id)
+        self.assertEqual(tran.category_id, new_cat.id)
+        self.assertEqual(tran.subcategory_id, new_sub.id)
+        self.assertEqual(tran.period_id, new_per.id)
+        self.assertAlmostEqual(float(tran.amount), 12.91)
+
+    def test_category_from_business(self):
+        result = TransactionManager(self.engine).create(
+            account_id=self.account.id,
+            amount=12.91,
+            transaction_date="2023-01-01",
+            business_id=1,
+        )
+        self.assertIsInstance(result, TransactionModel)
+        self.assertEqual(result.category_id, self.category.id)
+        self.assertEqual(result.subcategory_id, self.subcategory.id)

@@ -1,5 +1,4 @@
 from argparse import ArgumentParser
-import shlex
 
 
 class HasSubparsers:
@@ -8,13 +7,11 @@ class HasSubparsers:
 
 
 def process_data(data: str):
-    data = shlex.split(data)
-    result = {}
-    for item in data:
-        key, value = item.split("=", 1)
-        result[key] = value
-
-    return result
+    """
+    Process a single data item - items are already split
+    """
+    key, value = data.split("=", 1)
+    return {key: value}
 
 
 class Parser:
@@ -34,9 +31,11 @@ class Parser:
             "--database",
             help="Path to database file",
         )
+        parser.add_argument("-v", "--verbose", help="Print verbose messages", action="store_true")
+
         subparsers = parser.add_subparsers(dest="action", required=True)
-        _ = self.add_action(subparsers, "create", "Create an item")
-        _ = self.add_action(subparsers, "c", "Create an item")
+        c1 = self.add_action(subparsers, "create", "Create an item")
+        c2 = self.add_action(subparsers, "c", "Create an item")
         _ = self.add_action(subparsers, "update", "Update an item")
         _ = self.add_action(subparsers, "u", "Update an item")
         _ = self.add_action(subparsers, "delete", "Delete an item")
@@ -49,6 +48,8 @@ class Parser:
         _ = self.add_action(subparsers, "h", "Get a list of data items")
 
         #   Add bonus options
+        c1.add_argument("-q", "--qr-code", help="Create from QR code", action="store_true")
+        c2.add_argument("-q", "--qr-code", help="Create from QR code", action="store_true")
         q1.add_argument("-l", "--limit", help="How many rows to return", type=int, default=100)
         q2.add_argument("-l", "--limit", help="How many rows to return", type=int, default=100)
         q1.add_argument("-o", "--offset", help="How many rows to offset", type=int, default=0)

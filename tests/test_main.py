@@ -47,6 +47,9 @@ class MainTestCase(unittest.TestCase):
         self.engine = create_engine(f"sqlite+pysqlite:///{self.db.name}")
         BaseModel.metadata.create_all(self.engine)
 
+    def tearDown(self):
+        self.db.close()
+
     def test_main_pre_existing(self):
         #   Create a category
         main(
@@ -54,6 +57,8 @@ class MainTestCase(unittest.TestCase):
                 database=self.db.name,
                 action="create",
                 object="category",
+                qr_code=False,
+                verbose=True,
                 data=[{"name": "test_cat"}],
             )
         )
@@ -64,6 +69,8 @@ class MainTestCase(unittest.TestCase):
                 database=self.db.name,
                 action="create",
                 object="subcategory",
+                qr_code=False,
+                verbose=True,
                 data=[{"name": "test_sub", "category_id": 1}],
             )
         )
@@ -74,6 +81,8 @@ class MainTestCase(unittest.TestCase):
                 database=self.db.name,
                 action="create",
                 object="account",
+                qr_code=False,
+                verbose=True,
                 data=[{"name": "test_acc"}],
             )
         )
@@ -84,6 +93,8 @@ class MainTestCase(unittest.TestCase):
                 database=self.db.name,
                 action="create",
                 object="transaction",
+                qr_code=False,
+                verbose=True,
                 data=[
                     {"amount": 12.54},
                     {"account_id": 1},
@@ -101,6 +112,7 @@ class MainTestCase(unittest.TestCase):
                 object="transaction",
                 limit=10,
                 offset=0,
+                verbose=True,
                 data=[],
             )
         )

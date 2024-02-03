@@ -8,6 +8,10 @@ from typing import Any
 from sqlalchemy import create_engine
 from sqlalchemy.engine import Engine
 
+from finance_tracker.qr_handler import (
+    get_qr_from_video,
+    QRData,
+)
 from finance_tracker.managers import (
     AccountManager,
     BusinessManager,
@@ -19,6 +23,10 @@ from finance_tracker.managers import (
 from finance_tracker.models import BaseModel
 
 logger = logging.getLogger(__name__)
+handler = logging.StreamHandler()
+formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(module)s - %(funcName)s - %(msg)s")
+handler.setFormatter(formatter)
+logger.addHandler(handler)
 
 
 def interact(prompt: str, choices: list[Any]) -> Any:
@@ -57,12 +65,13 @@ class DBHandler:
             path = Path(path).expanduser()
 
         if path and path.exists():
-            pass
-        if self.check_standard_paths():
+            logger.info(f"Using provided path: {path}")
+        elif not path and self.check_standard_paths():
             path = Path(self.check_standard_paths()).expanduser()
             logger.info(f"Using existing standard path: {path}")
         else:
             path = path or self.ask_which_path_to_use()
+            logger.info(f"Setting up database: {path}")
             path = Path(path).expanduser()
             self.create_if_not_exists(path)
             self.engine = self.create_engine(path)
@@ -70,6 +79,7 @@ class DBHandler:
             if interact("Use default objects?", ["Yes", "No"]) == "Yes":
                 self.initial_setup(engine=self.engine)
 
+        print(f"Using path: {path}")
         self.path = path
         self.engine = self.create_engine(path)
 
@@ -117,6 +127,7 @@ def main(args):
     1. action - create, update, delete, get, query
     2. object - what to apply the action to
     """
+    logger.setLevel(logging.DEBUG if args.verbose else logging.WARNING)
     db_handler = DBHandler(path=args.database)
     args.object = (
         args.object[0]
@@ -161,7 +172,15 @@ def main(args):
             print(f"{args.object} possible data: {fields}")
             return
         case "create" | "c":
-            result = manager.create(**args.data)
+            if args.qr_code:
+                if args.object not in ["business", "b", "transaction", "t"]:
+                    raise ValueError(
+                        "QR Code flow only available for business and transaction"
+                    )
+                qrdata = QRData.from_string(get_qr_from_video())
+                result = manager.from_qr_code(qrdata, **args.data)
+            else:
+                result = manager.create(**args.data)
         case "get" | "g":
             result = manager.get(**args.data)
         case "update" | "u":

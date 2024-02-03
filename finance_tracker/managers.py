@@ -22,6 +22,9 @@ from finance_tracker.models import (
     PeriodModel,
     TransactionModel,
 )
+from finance_tracker.qr_handler import (
+    QRData,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -109,6 +112,13 @@ class AccountManager(BaseManager):
 class BusinessManager(BaseManager):
     model = BusinessModel
 
+    def from_qr_code(self, qrdata: QRData, **data):
+        data = {
+            "code": qrdata.business_code,
+            **data,
+        }
+        return self.create(**data)
+
 
 class CategoryManager(BaseManager):
     model = CategoryModel
@@ -142,4 +152,78 @@ class TransactionManager(BaseManager):
     model = TransactionModel
     #   TODO: this needs to be cancellable:
     #   1. Disable delete
-    #   2. Cnacelling a transaction creates a new transaction for the negative sum
+    #   2. Cancelling a transaction creates a new transaction for the negative sum
+
+    def create(self, **data):
+        """
+        Handle dates if they are not given
+        """
+        #   Handle periods
+        if not data.get("period_id"):
+
+            #   Get or create the period corresponding to the transaction date or today
+            period_manager = PeriodManager(self.engine)
+
+            if data.get("transaction_date"):
+                logger.info(f"Using period for date: {data['transaction_date']}")
+                transaction_date = dt.date.fromisoformat(data["transaction_date"])
+                data["transaction_date"] = transaction_date
+                period_start = dt.date(
+                   transaction_date.year,
+                   transaction_date.month,
+                   1,
+                )
+            else:
+                logger.info("Using period for today")
+                period_start = None
+
+            period = period_manager.query(
+                period_start=period_start,
+            )
+            period = period[0] if period else None
+            if not period:
+                period = period_manager.create()  # Today
+
+            data["period_id"] = period.id
+
+        #   Use business categories if not given
+        if (
+            data.get("business_id")
+            and (
+                not data.get("category_id")
+                or not data.get("subcategory_id")
+            )
+        ):
+            business_manager = BusinessManager(self.engine)
+            business = business_manager.get(data.get("business_id"))
+            data["category_id"] = data.get("category_id", business.default_category_id)
+            data["subcategory_id"] = data.get("subcategory_id", business.default_subcategory_id)
+
+        return super().create(**data)
+
+    def from_qr_code(self, qrdata: QRData, **data):
+        business = BusinessManager(engine=self.engine).query(code=qrdata.business_code)
+        business = business[0] if business else business
+        if not business:
+            raise ValueError(f"Business with code: {qrdata.business_code} not found")
+
+        period_manager = PeriodManager(engine=self.engine)
+        period_start = dt.date(qrdata.date.year, qrdata.date.month, 1)
+        period = period_manager.query(period_start=period_start)
+        if not period:
+            period = period_manager.create(period_start=period_start)
+        else:
+            period = period[0]
+
+        #   Data given last so that it can override QR Code values
+        data = {
+            "amount": qrdata.amount,
+            "code": f"{qrdata.business_code}-{qrdata.transaction_code}",
+            "transaction_date": qrdata.date,
+            "business_id": business.id,
+            "period_id": period.id,
+            "category_id": business.default_category_id,
+            "subcategory_id": business.default_subcategory_id,
+            **data,
+        }
+        return self.create(**data)
