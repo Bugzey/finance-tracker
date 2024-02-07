@@ -129,6 +129,26 @@ def main(args):
     """
     logger.setLevel(logging.DEBUG if args.verbose else logging.WARNING)
     db_handler = DBHandler(path=args.database)
+
+    if args.action == "report":
+        #   TODO: extract into a separate function
+        #   TODO: use conditional imports since finance_tracker[report] might not be
+        #   installed
+        from threading import Thread
+        import webbrowser
+        import time
+        from finance_tracker.report.app import app
+
+        app.config.engine = db_handler.engine
+
+        def wait_and_open_browser():
+            time.sleep(1)
+            webbrowser.open("http://localhost:5000")
+
+        _ = Thread(target=wait_and_open_browser).run()
+        app.run(debug=args.verbose)
+        return
+
     args.object = (
         args.object[0]
         if isinstance(args.object, list)

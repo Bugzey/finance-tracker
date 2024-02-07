@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+
+{% block title %}
+Summary
+{% endblock %}
+
+{% block inner_title %}
+Summary
+{% endblock %}
+
+{% block content %}
+<div class="metrics">
+	<div class="main_metric">
+		<p>Current month total: {{ metrics.current_month_total }}</p>
+	</div>
+	<div class="main_metric">
+		<p>Previous month: {{ metrics.previous_month_total }}</p>
+		<div class="secondary_metric">
+			<p>Difference: {{ metrics.month_over_month_difference }}</p>
+		</div>
+		<div class="secondary_metric">
+			<p>Percent: {{ metrics.month_over_month_percent }}</p>
+		</div>
+	</div>
+
+	<div class="main_metric">
+		<p>Previous year: {{ metrics.previous_year_total }}</p>
+		<div class="secondary_metric">
+			<p>Difference: {{ metrics.year_over_year_difference }}</p>
+			<p>Percent: {{ metrics.year_over_year_percent }}</p>
+		</div>
+	</div>
+</div>
+{% endblock %}
