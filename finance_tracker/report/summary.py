@@ -15,11 +15,16 @@ What do we want in terms of data?
 
 from dataclasses import dataclass
 import datetime as dt
+import io
 from typing import Self
 
+import matplotlib
+import matplotlib.pyplot as plt
 from sqlalchemy.engine import Engine
 from sqlalchemy import text
 
+
+matplotlib.use("svg")
 
 SUMMARY_QUERY = """-- # noqa
 with base as
@@ -50,6 +55,26 @@ select
 
 from
     base;
+"""
+
+
+TOTAL_HISTORY_QUERY = """-- # noqa
+select
+    per.period_start
+    , sum(tran.amount) as amount
+from
+    "transaction" tran
+
+    left join period per
+    on tran.period_id = per.id
+
+where
+    1 = 1
+    and tran.account_id = :account_id
+    and per.period_start <= :period
+
+group by
+    per.period_start
 """
 
 
@@ -90,3 +115,61 @@ class SummaryMetrics:
             ).fetchone()
 
         return cls(**result._mapping)
+
+
+@dataclass
+class SummaryPlot:
+    data: dict
+    plot_svg: str
+
+    @classmethod
+    def from_engine(
+        cls,
+        engine: Engine,
+        account_id: int = 1,
+        period: dt.date | None = None
+    ) -> Self:
+        if not period:
+            period = dt.date.today().replace(day=1)
+
+        with engine.begin() as con:
+            result = con.execute(
+                text(TOTAL_HISTORY_QUERY),
+                parameters=dict(
+                    account_id=account_id,
+                    period=period,
+                ),
+            ).all()
+
+        data = cls.reshape_data(result)
+        plot_svg = cls.make_graph(data)
+        return cls(data=data, plot_svg=plot_svg)
+
+    @staticmethod
+    def reshape_data(data: list[tuple]) -> dict:
+        """
+        Reshape the list of named tuples output by sqlalchemy into a dictionary for use in plotting
+        """
+        result = {
+            "period_start": [item._mapping["period_start"] for item in data],
+            "amount": [item._mapping["amount"] for item in data],
+        }
+        return result
+
+    @staticmethod
+    def make_graph(data: dict) -> bytes:
+        """
+        Create the graph and output it PNG format as a bytes object
+        """
+        fig, ax = plt.subplots()
+        ax.plot(data["period_start"], data["amount"])
+        ax.set_xlabel("Period")
+        ax.set_ylabel("Amount")
+        ax.set_title("Total Amount")
+
+        with io.BytesIO() as cur_file:
+            _ = fig.savefig(cur_file, format="png")
+            cur_file.seek(0)
+            result = cur_file.read()
+
+        return result
