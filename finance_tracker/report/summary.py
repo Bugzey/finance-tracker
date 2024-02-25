@@ -13,7 +13,7 @@ What do we want in terms of data?
 - (future): multi-select - add child accounts
 """
 
-from dataclasses import dataclass
+from dataclasses import dataclass, fields
 import datetime as dt
 import io
 from typing import Self
@@ -88,6 +88,11 @@ class SummaryMetrics:
     month_over_month_percent: float
     year_over_year_difference: float
     year_over_year_percent: float
+
+    def __post_init__(self):
+        for item in fields(self):
+            if item.type in (int, float):
+                self.__dict__[item.name] = self.__dict__[item.name] or 0.0
 
     @classmethod
     def from_engine(

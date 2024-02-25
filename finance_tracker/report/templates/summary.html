@@ -8,26 +8,51 @@ Summary
 Summary
 {% endblock %}
 
+{% block nav %}
+<h2>Navigation</h2>
+<ul>
+	<li><a href={{ url_for("home") }}>Home</a></li>
+	<li><a href={{ url_for("summary") }}>Summary</a></li>
+</ul>
+{% endblock %}
+
 {% block content %}
+<h2>Metrics</h2>
 <div class="metrics">
-	<div class="main_metric">
-		<p>Current month total: {{ metrics.current_month_total }}</p>
-	</div>
-	<div class="main_metric">
-		<p>Previous month: {{ metrics.previous_month_total }}</p>
-		<div class="secondary_metric">
-			<p>Difference: {{ metrics.month_over_month_difference }}</p>
-		</div>
-		<div class="secondary_metric">
-			<p>Percent: {{ metrics.month_over_month_percent }}</p>
+	<div class="metric">
+		<div class="main_metric">
+			<p class="label">Current month total:</p>
+			<p class="value">{{ metrics.current_month_total | round(2)}}</p>
 		</div>
 	</div>
 
-	<div class="main_metric">
-		<p>Previous year: {{ metrics.previous_year_total }}</p>
+	<div class="metric">
+		<div class="main_metric">
+			<p class="label">Previous month:</p>
+			<p class="value">{{ metrics.previous_month_total| round(2) }}</p>
+		</div>
 		<div class="secondary_metric">
-			<p>Difference: {{ metrics.year_over_year_difference }}</p>
-			<p>Percent: {{ metrics.year_over_year_percent }}</p>
+			<p class="label">Diff:</p>
+			<p class="value">{{ metrics.month_over_month_difference | round(2)}}</p>
+		</div>
+		<div class="secondary_metric">
+			<p class="label">Percent:</p>
+			<p class="value">{{ metrics.month_over_month_percent | round(2)}}</p>
+		</div>
+	</div>
+
+	<div class="metric">
+		<div class="main_metric">
+			<p class="label">Previous year:</p>
+			<p class="value">{{ metrics.previous_year_total | round(2)}}</p>
+		</div>
+		<div class="secondary_metric">
+			<p class="label">Diff:</p>
+			<p class="value">{{ metrics.year_over_year_difference | round(2)}}</p>
+		</div>
+		<div class="secondary_metric">
+			<p class="label">Percent:</p>
+			<p class="value">{{ metrics.year_over_year_percent | round(2)}}</p>
 		</div>
 	</div>
 </div>
@@ -35,4 +60,22 @@ Summary
 <div class="plot">
 	<img src="data:image/png;base64,{{ plot }}"/>
 </div>
+{% endblock %}
+
+{% block filters %}
+<h2>Filters</h2>
+<form id="filter" formmethod="get">
+{% for item in filters %}
+	{% if item.type == "single" %}
+	<label for={{ item.name }}>{{ item.name }} </label>
+	<br>
+	<select name={{ item.name }} id={{ item.name }}>
+		{% for id, name in item.data %}
+		<option value={{ id }}>{{ name | capitalize }}</option>
+		{% endfor %}
+	</select>
+	{% endif %}
+{% endfor %}
+<input type="submit" />
+</form>
 {% endblock %}

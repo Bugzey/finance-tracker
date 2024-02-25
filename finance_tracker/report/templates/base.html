@@ -1,15 +1,26 @@
 <html>
 	<head>
 		<title>{% block title %}{% endblock %} - Finance Tracker</title>
+		<link rel="stylesheet" href={{ url_for("static", filename="style.css") }}>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
 	</head>
 
 	<body>
 		<header>
 			<h1>{% block inner_title %}{% endblock %}</h1>
 		</header>
+		<nav>
+			{% block nav %}
+			{% endblock %}
+		</nav>
 		<main>
 			{% block content %}
 			{% endblock %}
 		</main>
+		<aside>
+			{% block filters %}
+			{% endblock %}
+		</aside>
 	</body>
 </html>
