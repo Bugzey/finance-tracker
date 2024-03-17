@@ -18,7 +18,8 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-optional_dependency_name = [
+reporting = [
+	"flask",
 ]
 
 [project.urls]

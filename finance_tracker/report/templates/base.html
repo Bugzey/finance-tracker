@@ -1,0 +1,30 @@
+<html>
+	<head>
+		<title>{% block title %}{% endblock %} - Finance Tracker</title>
+		<link rel="stylesheet" href={{ url_for("static", filename="style.css") }}>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+	</head>
+
+	<body>
+		<header>
+			<h1>{% block inner_title %}{% endblock %}</h1>
+		</header>
+		<nav>
+			<h2>Navigation</h2>
+			<ul>
+				<li><a href={{ url_for("home") }}>Home</a></li>
+				<li><a href={{ url_for("summary") }}>Summary</a></li>
+			</ul>
+		</nav>
+		<main>
+			{% block content %}
+			{% endblock %}
+		</main>
+		<aside>
+			<h2>Filters</h2>
+			{% block filters %}
+			{% endblock %}
+		</aside>
+	</body>
+</html>

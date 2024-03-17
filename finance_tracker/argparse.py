@@ -47,6 +47,8 @@ class Parser:
         _ = self.add_action(subparsers, "help", "Get a list of data items")
         _ = self.add_action(subparsers, "h", "Get a list of data items")
 
+        _ = subparsers.add_parser("report", help="Run report server")
+
         #   Add bonus options
         c1.add_argument("-q", "--qr-code", help="Create from QR code", action="store_true")
         c2.add_argument("-q", "--qr-code", help="Create from QR code", action="store_true")

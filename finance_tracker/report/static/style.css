@@ -1,0 +1,72 @@
+body {
+	/*	Basics	*/
+	font-family: Ubuntu, sans-serif;
+	font-size: 16px;
+	box-sizing: bounding-box;
+	max-width: 80rem;
+	margin: auto;
+	background: LightSkyBlue;
+
+	/*	Child elements	*/
+	display: flex;
+	flex-direction: row;
+	flex-wrap: wrap;
+}
+
+header {
+	flex: 1 1 100%;
+}
+
+header,
+nav,
+main,
+aside {
+	border-radius: 1rem;
+	margin: 1rem 1rem;
+	padding: 1rem 1rem;
+	background: white;
+}
+
+nav {
+	flex: 1 1 10%;
+}
+
+main {
+	background: white;
+	flex: 1 1 60%;
+}
+
+aside {
+	background: white;
+	flex: 1 1 10%;
+}
+
+/*	Metrics	*/
+
+div.metrics {
+	display: flex;
+	flex-direction: row;
+	justify-content: space-between;
+}
+
+div.metric {
+	display: flex;
+	flex-direction: column;
+}
+
+div.main_metric {
+	width: 50%;
+}
+
+div.secondary_metric {
+	width: 50%;
+}
+
+p.label {
+	font-size: 1em;
+}
+
+p.value {
+	font-size: 2em;
+	margin: 0 0.5;
+}
