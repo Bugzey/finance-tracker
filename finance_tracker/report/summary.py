@@ -71,7 +71,16 @@ from
 where
     1 = 1
     and tran.account_id = :account_id
-    and per.period_start <= :period
+    and (
+        per.period_start <= (
+            select
+                per.period_start
+            from
+                period per
+            where
+                per.id = :period_id
+        )
+    )
 
 group by
     per.period_start
@@ -99,16 +108,22 @@ class SummaryMetrics:
         cls,
         engine: Engine,
         account_id: int = 1,
-        period: dt.date | None = None,
+        period_id: int | None = None,
     ) -> Self:
         #   Test - pass a query
-        if not period:
-            period = dt.date.today().replace(day=1)
-
-        previous_month = (period - dt.timedelta(days=1)).replace(day=1)
-        previous_year = period.replace(year=period.year - 1)
-
         with engine.begin() as con:
+            if period_id:
+                period = con.execute(
+                    text("select period_start from period where id = :id"),
+                    parameters={"id": period_id},
+                ).scalar()
+                period = dt.date.fromisoformat(period)
+            else:
+                period = dt.date.today().replace(day=1)
+
+            previous_month = (period - dt.timedelta(days=1)).replace(day=1)
+            previous_year = period.replace(year=period.year - 1)
+
             result = con.execute(
                 text(SUMMARY_QUERY),
                 parameters=dict(
@@ -132,7 +147,8 @@ class SummaryPlot:
         cls,
         engine: Engine,
         account_id: int = 1,
-        period: dt.date | None = None
+        period_id: int | None = None,
+        period: dt.date | None = None,
     ) -> Self:
         if not period:
             period = dt.date.today().replace(day=1)
@@ -143,6 +159,7 @@ class SummaryPlot:
                 parameters=dict(
                     account_id=account_id,
                     period=period,
+                    period_id=period_id,
                 ),
             ).all()
 
