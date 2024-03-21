@@ -187,6 +187,7 @@ class SummaryPlot:
         ax.plot(data["period_start"], data["amount"])
         ax.set_xlabel("Period")
         ax.set_ylabel("Amount")
+        ax.set_ylim(ymin=0)
         ax.set_title("Total Amount")
 
         with io.BytesIO() as cur_file:
