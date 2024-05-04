@@ -1,0 +1,2 @@
+graft finance_tracker/report/templates
+graft finance_tracker/report/static
