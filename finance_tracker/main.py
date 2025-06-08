@@ -9,6 +9,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.engine import Engine
 
 from finance_tracker.qr_handler import (
+    create_capture,
     get_qr_from_video,
     QRData,
 )
@@ -197,7 +198,8 @@ def main(args):
                     raise ValueError(
                         "QR Code flow only available for business and transaction"
                     )
-                qrdata = QRData.from_string(get_qr_from_video())
+                capture = create_capture()
+                qrdata = QRData.from_string(get_qr_from_video(capture))
                 result = manager.from_qr_code(qrdata, **args.data)
             else:
                 result = manager.create(**args.data)
