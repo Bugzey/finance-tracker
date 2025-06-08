@@ -7,8 +7,17 @@ import datetime as dt
 import unittest
 
 from finance_tracker.qr_handler import (
+    create_capture,
+    get_qr_from_video,
     QRData,
 )
+
+
+class GetQRFromVideoTestCase(unittest.TestCase):
+    def test_get_qr_from_video(self):
+        capture = create_capture("tests/out.jpg")
+        result = get_qr_from_video(capture)
+        self.assertIsInstance(result, str)
 
 
 class QRDataTestCase(unittest.TestCase):

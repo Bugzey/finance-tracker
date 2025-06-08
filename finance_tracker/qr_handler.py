@@ -9,18 +9,39 @@ from dataclasses import dataclass
 import datetime as dt
 import logging
 from typing import Self
+import sys
 
 import cv2 as cv
+
 
 QR_FORMAT = "<business_code>*<transaction_code>*<date>*<time>*<sum>"
 logger = logging.getLogger(__name__)
 
 
-def get_qr_from_video() -> str:
+def create_capture(source: int | str = 0) -> cv.VideoCapture:
+    if isinstance(source, str):
+        capture = cv.VideoCapture(source)
+    elif sys.platform == "windows":
+        capture = cv.VideoCapture(source, cv.CAP_DSHOW)
+    elif sys.platform == "linux":
+        capture = cv.VideoCapture(source, cv.CAP_V4L2)
+    else:
+        #   Set default device and hope for the best
+        capture = cv.VideoCapture(source)
+
+    #   Try setting codec and resolution
+    #   Query available codecs:
+    #   Set codec in OpenCV: https://forum.opencv.org/t/cv-videocapture-api-backend-issue/9522/3
+    capture.set(cv.CAP_PROP_FOURCC, cv.VideoWriter.fourcc("M", "J", "P", "G"))
+    capture.set(cv.CAP_PROP_FRAME_WIDTH, 1920)
+    capture.set(cv.CAP_PROP_FRAME_HEIGHT, 1080)
+    return capture
+
+
+def get_qr_from_video(capture: cv.VideoCapture) -> str:
     """
     Start the default video capture device and detect a single QR code using OpenCV
     """
-    capture = cv.VideoCapture(0)
     detector = cv.QRCodeDetector()
     data = None
 
