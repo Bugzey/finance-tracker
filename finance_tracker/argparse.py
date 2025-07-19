@@ -1,4 +1,8 @@
+"""
+Module with argument parsing
+"""
 from argparse import ArgumentParser
+from itertools import chain
 
 
 class HasSubparsers:
@@ -62,9 +66,7 @@ class Parser:
     def add_objects_argument(cls, parser: ArgumentParser) -> ArgumentParser:
         parser.add_argument(
             "object",
-            choices=[
-                *cls.objects, *[item[0] for item in cls.objects],
-            ],
+            choices=list(chain(*[[item, item[0]]for item in cls.objects])),
             nargs=1,
         )
         return parser
