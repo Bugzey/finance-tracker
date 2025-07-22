@@ -20,42 +20,17 @@ from typing import Self
 
 import matplotlib
 import matplotlib.pyplot as plt
-from sqlalchemy.engine import Engine
-from sqlalchemy import text
+from sqlalchemy import Engine, select, func
+from sqlalchemy.orm import Session
+
+from finance_tracker.models import (
+    AccountModel,
+    PeriodModel,
+    TransactionModel,
+)
 
 
 matplotlib.use("svg")
-
-SUMMARY_QUERY = """-- # noqa
-with base as
-(
-    select
-        sum(case when per.period_start = :period then tran.amount end) as current_month_total
-        , sum(case when per.period_start = :previous_month_period then tran.amount end) as previous_month_total
-        , sum(case when per.period_start = :previous_year_period then tran.amount end) as previous_year_total
-    from
-        "transaction" tran
-
-        left join period per
-        on tran.period_id = per.id
-
-    where
-        1 = 1
-        and tran.account_id = :account_id
-)
-
-select
-    base.current_month_total
-    , base.previous_month_total
-    , base.current_month_total - base.previous_month_total as month_over_month_difference
-    , (base.current_month_total - base.previous_month_total ) / base.previous_month_total as month_over_month_percent
-    , base.previous_year_total
-    , (base.current_month_total - base.previous_year_total) as year_over_year_difference
-    , (base.current_month_total - base.previous_year_total) / base.previous_year_total as year_over_year_percent
-
-from
-    base;
-"""
 
 
 TOTAL_HISTORY_QUERY = """-- # noqa
@@ -89,52 +64,41 @@ group by
 
 @dataclass
 class SummaryMetrics:
-    current_month_total: float
-    previous_month_total: float
-    previous_year_total: float
-
-    month_over_month_difference: float
-    month_over_month_percent: float
-    year_over_year_difference: float
-    year_over_year_percent: float
+    sess: Session
+    period: dt.date | None = None
+    account_id: int | None = None
 
     def __post_init__(self):
-        for item in fields(self):
-            if item.type in (int, float):
-                self.__dict__[item.name] = self.__dict__[item.name] or 0.0
+        self.period = self.period or self.sess.scalar(func.max(PeriodModel.period_start))
+        self.account_id = self.account_id or 1
 
-    @classmethod
-    def from_engine(
-        cls,
-        engine: Engine,
-        account_id: int = 1,
-        period_id: int | None = None,
-    ) -> Self:
-        #   Test - pass a query
-        with engine.begin() as con:
-            if period_id:
-                period = con.execute(
-                    text("select period_start from period where id = :id"),
-                    parameters={"id": period_id},
-                ).scalar()
-                period = dt.date.fromisoformat(period)
-            else:
-                period = dt.date.today().replace(day=1)
+    def _get_total_query(self, period: dt.date) -> float:
+        query = (
+            select(func.sum(TransactionModel.amount).label("amount"))
+            .where(
+                TransactionModel.period_id == (
+                    select(PeriodModel.id)
+                    .where(PeriodModel.period_start == period)
+                )
+            )
+            .group_by(TransactionModel.period_id)
+        )
+        return query
 
-            previous_month = (period - dt.timedelta(days=1)).replace(day=1)
-            previous_year = period.replace(year=period.year - 1)
+    def current_month_total(self) -> float:
+        query = self._get_total_query(self.period)
+        return self.sess.scalar(query) or 0.0
 
-            result = con.execute(
-                text(SUMMARY_QUERY),
-                parameters=dict(
-                    account_id=account_id,
-                    period=period,
-                    previous_month_period=previous_month,
-                    previous_year_period=previous_year,
-                ),
-            ).fetchone()
+    def previous_month_total(self) -> float:
+        period = dt.date(self.period.year, self.period.month, 1) - dt.timedelta(days=1)
+        period = dt.date(period.year, period.month, 1)
+        query = self._get_total_query(period)
+        return self.sess.scalar(query) or 0.0
 
-        return cls(**result._mapping)
+    def previous_year_total(self) -> float:
+        period = dt.date(self.period.year - 1, self.period.month, self.period.day)
+        query = self._get_total_query(period)
+        return self.sess.scalar(query) or 0.0
 
 
 @dataclass

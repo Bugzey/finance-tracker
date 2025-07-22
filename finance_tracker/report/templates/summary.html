@@ -1,74 +1,24 @@
 {% extends "base.html" %}
 
-{% block title %}
-Summary
-{% endblock %}
-
-{% block inner_title %}
-Summary
-{% endblock %}
-
+{% from "_macros.html" import metric, table %}
 
 {% block content %}
-<h2>Metrics</h2>
-<div class="metrics">
-	<div class="metric">
-		<div class="main_metric">
-			<p class="label">Current month total:</p>
-			<p class="value">{{ metrics.current_month_total | round(2)}}</p>
-		</div>
-	</div>
+    <h2 >Summary Report</h2>
 
-	<div class="metric">
-		<div class="main_metric">
-			<p class="label">Previous month:</p>
-			<p class="value">{{ metrics.previous_month_total| round(2) }}</p>
-		</div>
-		<div class="secondary_metric">
-			<p class="label">Diff:</p>
-			<p class="value">{{ metrics.month_over_month_difference | round(2)}}</p>
-		</div>
-		<div class="secondary_metric">
-			<p class="label">Percent:</p>
-			<p class="value">{{ metrics.month_over_month_percent | round(2)}}</p>
-		</div>
-	</div>
+    <div class="summary-section">
+        <h3 >Current Month Spend</h3>
+        {{ metric(current_month_spend, "This Month") }}
+        {{ metric(last_month_spend, "Last Month", current_month_spend, "Difference") }}
+        {{ metric(previous_year_spend, "Previous Year", current_month_spend, "Difference") }}
+    </div>
 
-	<div class="metric">
-		<div class="main_metric">
-			<p class="label">Previous year:</p>
-			<p class="value">{{ metrics.previous_year_total | round(2)}}</p>
-		</div>
-		<div class="secondary_metric">
-			<p class="label">Diff:</p>
-			<p class="value">{{ metrics.year_over_year_difference | round(2)}}</p>
-		</div>
-		<div class="secondary_metric">
-			<p class="label">Percent:</p>
-			<p class="value">{{ metrics.year_over_year_percent | round(2)}}</p>
-		</div>
-	</div>
-</div>
+    <div class="summary-section">
+        <h3 >Top 10 Categories</h3>
+        {{ table(top_categories_headers, top_categories_data) }}
+    </div>
 
-<div class="plot">
-	<img src="data:image/png;base64,{{ plot }}"/>
-</div>
-{% endblock %}
-
-{% block filters %}
-<form id="filter" formmethod="get">
-{% for item in filters %}
-	{% if item.type == "single" %}
-	<label for={{ item.name }}>{{ item.name | capitalize }} </label>
-	<br>
-	<select name={{ item.name }} id={{ item.name }} onchange="this.form.submit()">
-		{% for id, name in item.data %}
-		<!-- {{ id, name, item.default }} -->
-		<option value={{ id }} {{ "selected" if id == item.default }}>{{ name | capitalize }}</option>
-		{% endfor %}
-	</select>
-	{% endif %}
-{% endfor %}
-<input type="submit" />
-</form>
+    <div class="summary-section">
+        <h3 >Top 10 Businesses</h3>
+        {{ table(top_businesses_headers, top_businesses_data) }}
+    </div>
 {% endblock %}

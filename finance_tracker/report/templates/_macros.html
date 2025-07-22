@@ -1,0 +1,41 @@
+{% macro metric(value, label, comparison_value=None, comparison_label=None) %}
+    <div class="metric-container">
+        <span class="metric-value">{{ value | round(2) }}</span>
+        <span class="metric-label">{{ label }}</span>
+        {% if comparison_value %}
+            <div class="metric-comparison">
+                <span class="comparison-value">{{ comparison_value | round(2) }}</span>
+                <span class="comparison-label">{{ comparison_label }}</span>
+            </div>
+        {% endif %}
+    </div>
+{% endmacro %}
+
+{% macro table(headers, data) %}
+    <table >
+        <thead >
+            <tr >
+                {% for header in headers %}
+                    <th >{{ header }}</th>
+                {% endfor %}
+            </tr>
+        </thead>
+        <tbody >
+            {% for row in data %}
+                <tr >
+                    {% for cell in row %}
+                        <td >{{ cell }}</td>
+                    {% endfor %}
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% endmacro %}
+
+{% macro month_selector(months, selected_month) %}
+    <select name="month">
+        {% for month in months %}
+            <option value="{{ month }}" {% if month == selected_month %}selected{% endif %}>{{ month }}</option>
+        {% endfor %}
+    </select>
+{% endmacro %}

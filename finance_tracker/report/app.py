@@ -11,7 +11,7 @@ from flask import (
     render_template,
     request,
 )
-from sqlalchemy import text
+from sqlalchemy.orm import Session
 
 from finance_tracker.report.summary import (
     SummaryMetrics,
@@ -42,9 +42,20 @@ def home():
 
 @app.route("/summary/")
 def summary():
-    with app.config.engine.begin() as con:
-        accounts = con.execute(text("select id, name from account")).all()
-        periods = con.execute(text("select id, code from period order by code")).all()
+    period = request.form.get("period")
+    account_id = request.form.get("account_id")
+    with Session(app.config.engine) as sess:
+        metrics = SummaryMetrics(sess, period=period, account_id=account_id)
+        current_month_spend = metrics.current_month_total()
+        last_month_spend = metrics.previous_month_total()
+        previous_year_spend = metrics.previous_year_total()
+
+    return render_template(
+        "summary.html",
+        current_month_spend=current_month_spend,
+        last_month_spend=last_month_spend,
+        previous_year_spend=previous_year_spend,
+    )
 
     account_id = request.args.get("account")
     account_id = int(account_id) if account_id else accounts[0][0]
