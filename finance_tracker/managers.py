@@ -201,6 +201,15 @@ class TransactionManager(BaseManager):
 
         return super().create(**data)
 
+    def update(self, id: int, **data) -> BaseModel:
+        """
+        Handle dates
+        """
+        if "transaction_date" in data:
+            data["transaction_date"] = dt.date.fromisoformat(data["transaction_date"])
+
+        return super().update(id, **data)
+
     def from_qr_code(self, qrdata: QRData, **data):
         business = BusinessManager(engine=self.engine).query(code=qrdata.business_code)
         business = business[0] if business else business
