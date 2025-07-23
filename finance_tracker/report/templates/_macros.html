@@ -24,7 +24,13 @@
             {% for row in data %}
                 <tr >
                     {% for cell in row %}
-                        <td >{{ cell }}</td>
+					<td >
+						{% if cell is number %}
+							{{ cell | round(2) }}
+						{% else %}
+							{{ cell }}
+						{% endif %}
+					</td>
                     {% endfor %}
                 </tr>
             {% endfor %}

@@ -13,18 +13,20 @@ What do we want in terms of data?
 - (future): multi-select - add child accounts
 """
 
-from dataclasses import dataclass, fields
+from dataclasses import dataclass
 import datetime as dt
 import io
 from typing import Self
 
 import matplotlib
 import matplotlib.pyplot as plt
-from sqlalchemy import Engine, select, func
+from sqlalchemy import Engine, select, func, column
 from sqlalchemy.orm import Session
 
 from finance_tracker.models import (
     AccountModel,
+    BusinessModel,
+    CategoryModel,
     PeriodModel,
     TransactionModel,
 )
@@ -67,9 +69,18 @@ class SummaryMetrics:
     sess: Session
     period: dt.date | None = None
     account_id: int | None = None
+    top_n: int = 10
 
     def __post_init__(self):
-        self.period = self.period or self.sess.scalar(func.max(PeriodModel.period_start))
+        self.period = self.period or self.sess.execute(
+            select(func.max(PeriodModel.period_start))
+            .where(
+                PeriodModel.id.in_(
+                    select(TransactionModel.period_id)
+                    .scalar_subquery()
+                )
+            )
+        ).scalar()
         self.account_id = self.account_id or 1
 
     def _get_total_query(self, period: dt.date) -> float:
@@ -78,7 +89,11 @@ class SummaryMetrics:
             .where(
                 TransactionModel.period_id == (
                     select(PeriodModel.id)
-                    .where(PeriodModel.period_start == period)
+                    .where(
+                        PeriodModel.period_start == period,
+                        TransactionModel.account_id == self.account_id,
+                    )
+                    .scalar_subquery()
                 )
             )
             .group_by(TransactionModel.period_id)
@@ -99,6 +114,62 @@ class SummaryMetrics:
         period = dt.date(self.period.year - 1, self.period.month, self.period.day)
         query = self._get_total_query(period)
         return self.sess.scalar(query) or 0.0
+
+    def top_businesses(self) -> list[dict]:
+        query = (
+            select(
+                TransactionModel.business_id,
+                BusinessModel.name,
+                func.count(TransactionModel.id).label("count"),
+                func.sum(TransactionModel.amount).label("amount"),
+            )
+            .join_from(
+                TransactionModel,
+                BusinessModel,
+                onclause=TransactionModel.business_id == BusinessModel.id,
+            )
+            .where(
+                TransactionModel.account_id == self.account_id,
+                TransactionModel.period_id == (
+                    select(PeriodModel.id)
+                    .where(PeriodModel.period_start == self.period)
+                    .scalar_subquery()
+                ),
+            )
+            .group_by(TransactionModel.business_id)
+            .order_by(column("amount").desc())
+            .limit(self.top_n)
+        )
+        return self.sess.execute(query).all()
+
+    def top_categories(self) -> list[dict]:
+        query = (
+            select(
+                TransactionModel.category_id,
+                CategoryModel.name,
+                func.count(TransactionModel.id).label("count"),
+                func.sum(TransactionModel.amount).label("amount"),
+            )
+            .join_from(
+                TransactionModel,
+                CategoryModel,
+                onclause=TransactionModel.category_id == CategoryModel.id,
+            )
+            .where(
+                TransactionModel.account_id == self.account_id,
+                TransactionModel.period_id == (
+                    select(PeriodModel.id)
+                    .where(
+                        PeriodModel.period_start == self.period,
+                    )
+                    .scalar_subquery()
+                ),
+            )
+            .group_by(TransactionModel.category_id)
+            .order_by(column("amount").desc())
+            .limit(self.top_n)
+        )
+        return self.sess.execute(query).all()
 
 
 @dataclass

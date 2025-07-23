@@ -49,12 +49,22 @@ def summary():
         current_month_spend = metrics.current_month_total()
         last_month_spend = metrics.previous_month_total()
         previous_year_spend = metrics.previous_year_total()
+        top_businesses = metrics.top_businesses() or []
+        top_categories = metrics.top_categories() or []
+
+    #   Format items
+    top_businesses_header = top_businesses[0]._fields if top_businesses else []
+    top_categories_header = top_businesses[0]._fields if top_categories else []
 
     return render_template(
         "summary.html",
         current_month_spend=current_month_spend,
         last_month_spend=last_month_spend,
         previous_year_spend=previous_year_spend,
+        top_businesses_headers=top_businesses_header,
+        top_businesses_data=top_businesses,
+        top_categories_headers=top_categories_header,
+        top_categories_data=top_categories,
     )
 
     account_id = request.args.get("account")
