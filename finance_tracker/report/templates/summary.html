@@ -1,24 +1,30 @@
 {% extends "base.html" %}
 
-{% from "_macros.html" import metric, table %}
+{% from "_macros.html" import metric, selector, table %}
 
 {% block content %}
-    <h2 >Summary Report</h2>
+	<h2 >Summary Report</h2>
 
-    <div class="summary-section">
-        <h3 >Current Month Spend</h3>
-        {{ metric(current_month_spend, "This Month") }}
-        {{ metric(last_month_spend, "Last Month", current_month_spend, "Difference") }}
-        {{ metric(previous_year_spend, "Previous Year", current_month_spend, "Difference") }}
-    </div>
+	<div class="summary-section">
+		<h3>Filters</h3>
+		{{ selector("Period", period_values, period_selected) }}
+		{{ selector("Account", account_values, account_selected) }}
+	</div>
 
-    <div class="summary-section">
-        <h3 >Top 10 Categories</h3>
-        {{ table(top_categories_headers, top_categories_data) }}
-    </div>
+	<div class="summary-section">
+		<h3 >Current Month Spend</h3>
+		{{ metric(current_month_spend, "This Month") }}
+		{{ metric(last_month_spend, "Last Month", current_month_spend, "Difference") }}
+		{{ metric(previous_year_spend, "Previous Year", current_month_spend, "Difference") }}
+	</div>
 
-    <div class="summary-section">
-        <h3 >Top 10 Businesses</h3>
-        {{ table(top_businesses_headers, top_businesses_data) }}
-    </div>
+	<div class="summary-section">
+		<h3 >Top 10 Categories</h3>
+		{{ table(top_categories_headers, top_categories_data) }}
+	</div>
+
+	<div class="summary-section">
+		<h3 >Top 10 Businesses</h3>
+		{{ table(top_businesses_headers, top_businesses_data) }}
+	</div>
 {% endblock %}

@@ -38,10 +38,15 @@
     </table>
 {% endmacro %}
 
-{% macro month_selector(months, selected_month) %}
-    <select name="month">
-        {% for month in months %}
-            <option value="{{ month }}" {% if month == selected_month %}selected{% endif %}>{{ month }}</option>
-        {% endfor %}
-    </select>
+
+{% macro selector(label, values, selected_value) %}
+    <div class="selector-container">
+        <label class="selector-label">{{ label }}:</label>
+        <select name="{{ label|lower }}" >
+            {% for value, display_name in values.items() %}
+                <option value="{{ value }}" {% if value == selected_value %}selected{% endif %}>{{ display_name }}</option>
+            {% endfor %}
+        </select>
+    </div>
 {% endmacro %}
+

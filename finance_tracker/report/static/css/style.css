@@ -1,3 +1,4 @@
+/*	Base	*/
 body {
   font-family: sans-serif;
   margin: 0;
@@ -43,6 +44,7 @@ footer {
   width: 100%;
 }
 
+/*	Summary	*/
 .summary-section {
   margin-bottom: 2em;
   background-color: #fff;
@@ -51,6 +53,8 @@ footer {
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
 
+
+/*	Metric	*/
 .metric-container {
   display: flex;
   flex-direction: column;
@@ -78,6 +82,25 @@ footer {
   color: #777;
 }
 
+/*	Selector	*/
+.selector-container {
+    margin-bottom: 10px;
+}
+
+.selector-label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+
+.selector-container select {
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+/*	Table	*/
 table {
   width: 100%;
   border-collapse: collapse;
