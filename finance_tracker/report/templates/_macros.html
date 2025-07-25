@@ -1,0 +1,52 @@
+{% macro metric(value, label, comparison_value=None, comparison_label=None) %}
+    <div class="metric-container">
+        <span class="metric-value">{{ value | round(2) }}</span>
+        <span class="metric-label">{{ label }}</span>
+        {% if comparison_value %}
+            <div class="metric-comparison">
+                <span class="comparison-value">{{ ((comparison_value or 0.0) - value) | round(2) }}</span>
+                <span class="comparison-label">{{ comparison_label }}</span>
+            </div>
+        {% endif %}
+    </div>
+{% endmacro %}
+
+{% macro table(headers, data) %}
+    <table >
+        <thead >
+            <tr >
+                {% for header in headers %}
+                    <th >{{ header }}</th>
+                {% endfor %}
+            </tr>
+        </thead>
+        <tbody >
+            {% for row in data %}
+                <tr >
+                    {% for cell in row %}
+					<td >
+						{% if cell is number %}
+							{{ cell | round(2) }}
+						{% else %}
+							{{ cell }}
+						{% endif %}
+					</td>
+                    {% endfor %}
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% endmacro %}
+
+
+{% macro selector(label, values, selected_value) %}
+    <div class="selector-container">
+        <label class="selector-label">{{ label }}:</label>
+        <select name="{{ label|lower }}" >
+            {% for value, display_name in values.items() %}
+                <option value="{{ value }}" {% if value == selected_value %}selected{% endif %}>{{ display_name }}</option>
+            {% endfor %}
+        </select>
+    </div>
+{% endmacro %}
+

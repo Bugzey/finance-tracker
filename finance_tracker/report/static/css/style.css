@@ -1,0 +1,152 @@
+/*	Base	*/
+body {
+	font-family: sans-serif;
+	margin: 0;
+	padding: 0;
+	background-color: #f4f4f4;
+}
+
+header {
+	background-color: #333;
+	color: #fff;
+	padding: 1em 0;
+	text-align: center;
+}
+
+/* Navigation styles */
+nav {
+    background-color: #333; /* Dark background for the navigation bar */
+    overflow: hidden; /* Prevents layout issues */
+}
+
+nav a {
+    float: left; /* Makes the links appear horizontally */
+    display: block; /* Important for padding and margin to work correctly */
+    color: white; /* White text color */
+    text-align: center;
+    padding: 14px 16px;
+    text-decoration: none; /* Removes underlines from links */
+    transition: background-color 0.3s ease; /* Smooth transition for hover effect */
+}
+
+nav a:hover {
+    background-color: #ddd; /* Light gray background on hover */
+    color: black; /* Black text on hover */
+}
+
+nav a.active {
+    background-color: #4CAF50; /* Green background for the active page */
+    color: white;
+}
+
+main {
+	padding: 1em;
+}
+
+footer {
+	background-color: #333;
+	color: #fff;
+	text-align: center;
+	padding: 0.5em 0;
+	position: fixed;
+	bottom: 0;
+	width: 100%;
+}
+
+/*	Summary	*/
+.summary-section {
+	margin-bottom: 2em;
+	background-color: #fff;
+	padding: 1em;
+	border-radius: 5px;
+	box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+
+/*	Metric	*/
+.metric-container {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	padding: 1em;
+	margin-bottom: 1em;
+	border: 1px solid #ccc;
+	border-radius: 5px;
+}
+
+.metric-value {
+	font-size: 2em;
+	font-weight: bold;
+}
+
+.metric-label {
+	font-size: 1em;
+	color: #555;
+}
+
+.metric-comparison {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	color: #777;
+}
+
+/*	Selector	*/
+.selector-container {
+	margin-bottom: 10px;
+}
+
+.selector-label {
+	display: block;
+	margin-bottom: 5px;
+	font-weight: bold;
+}
+
+.selector-container select {
+	padding: 8px;
+	border: 1px solid #ccc;
+	border-radius: 4px;
+	font-size: 14px;
+}
+
+/*	Selector Submit Button	*/
+button[type="submit"] {
+	background-color: #4CAF50; /* Green */
+	border: none;
+	color: white;
+	padding: 10px 20px;
+	text-align: center;
+	text-decoration: none;
+	display: inline-block;
+	font-size: 16px;
+	margin: 4px 2px;
+	cursor: pointer;
+	border-radius: 5px;
+}
+
+button[type="submit"]:hover {
+	background-color: #3e8e41; /* Darker Green */
+}
+
+/*	Table	*/
+table {
+	width: 100%;
+	border-collapse: collapse;
+	margin-top: 1em;
+}
+
+th, td {
+	padding: 0.5em;
+	text-align: left;
+	border-bottom: 1px solid #ddd;
+}
+
+th {
+	background-color: #f2f2f2;
+	font-weight: bold;
+}
+
+/*	Modifiers	*/
+.flex-row {
+	flex-direction: row;
+}

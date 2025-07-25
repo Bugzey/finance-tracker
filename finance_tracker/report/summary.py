@@ -13,49 +13,25 @@ What do we want in terms of data?
 - (future): multi-select - add child accounts
 """
 
-from dataclasses import dataclass, fields
+from dataclasses import dataclass, field
 import datetime as dt
 import io
 from typing import Self
 
 import matplotlib
 import matplotlib.pyplot as plt
-from sqlalchemy.engine import Engine
-from sqlalchemy import text
+from sqlalchemy import Engine, select, func, column, text
+from sqlalchemy.orm import Session
+
+from finance_tracker.models import (
+    BusinessModel,
+    CategoryModel,
+    PeriodModel,
+    TransactionModel,
+)
 
 
 matplotlib.use("svg")
-
-SUMMARY_QUERY = """-- # noqa
-with base as
-(
-    select
-        sum(case when per.period_start = :period then tran.amount end) as current_month_total
-        , sum(case when per.period_start = :previous_month_period then tran.amount end) as previous_month_total
-        , sum(case when per.period_start = :previous_year_period then tran.amount end) as previous_year_total
-    from
-        "transaction" tran
-
-        left join period per
-        on tran.period_id = per.id
-
-    where
-        1 = 1
-        and tran.account_id = :account_id
-)
-
-select
-    base.current_month_total
-    , base.previous_month_total
-    , base.current_month_total - base.previous_month_total as month_over_month_difference
-    , (base.current_month_total - base.previous_month_total ) / base.previous_month_total as month_over_month_percent
-    , base.previous_year_total
-    , (base.current_month_total - base.previous_year_total) as year_over_year_difference
-    , (base.current_month_total - base.previous_year_total) / base.previous_year_total as year_over_year_percent
-
-from
-    base;
-"""
 
 
 TOTAL_HISTORY_QUERY = """-- # noqa
@@ -89,52 +65,116 @@ group by
 
 @dataclass
 class SummaryMetrics:
-    current_month_total: float
-    previous_month_total: float
-    previous_year_total: float
+    sess: Session
+    period_id: int | None = None
+    account_id: int | None = None
+    top_n: int = 10
 
-    month_over_month_difference: float
-    month_over_month_percent: float
-    year_over_year_difference: float
-    year_over_year_percent: float
+    period: dt.date = field(init=False)
 
     def __post_init__(self):
-        for item in fields(self):
-            if item.type in (int, float):
-                self.__dict__[item.name] = self.__dict__[item.name] or 0.0
+        if self.period_id:
+            period = self.sess.scalars(
+                select(PeriodModel)
+                .where(PeriodModel.id == self.period_id)
+            ).first()
+            self.period = period.period_start
+        else:
+            period = self.sess.scalars(
+                select(PeriodModel)
+                .where(
+                    PeriodModel.id.in_(
+                        select(TransactionModel.period_id)
+                        .distinct()
+                        .scalar_subquery()
+                    )
+                )
+                .order_by(PeriodModel.period_start.desc())
+            ).first()
+            self.period_id = period.id
+            self.period = period.period_start
 
-    @classmethod
-    def from_engine(
-        cls,
-        engine: Engine,
-        account_id: int = 1,
-        period_id: int | None = None,
-    ) -> Self:
-        #   Test - pass a query
-        with engine.begin() as con:
-            if period_id:
-                period = con.execute(
-                    text("select period_start from period where id = :id"),
-                    parameters={"id": period_id},
-                ).scalar()
-                period = dt.date.fromisoformat(period)
-            else:
-                period = dt.date.today().replace(day=1)
+        self.account_id = self.account_id or 1
 
-            previous_month = (period - dt.timedelta(days=1)).replace(day=1)
-            previous_year = period.replace(year=period.year - 1)
+    def _get_total_query(self, period: dt.date) -> float:
+        query = (
+            select(func.sum(TransactionModel.amount).label("amount"))
+            .where(
+                TransactionModel.period_id == (
+                    select(PeriodModel.id)
+                    .where(
+                        PeriodModel.period_start == period,
+                        TransactionModel.account_id == self.account_id,
+                    )
+                    .scalar_subquery()
+                )
+            )
+            .group_by(TransactionModel.period_id)
+        )
+        return query
 
-            result = con.execute(
-                text(SUMMARY_QUERY),
-                parameters=dict(
-                    account_id=account_id,
-                    period=period,
-                    previous_month_period=previous_month,
-                    previous_year_period=previous_year,
-                ),
-            ).fetchone()
+    def current_month_total(self) -> float:
+        query = self._get_total_query(self.period)
+        return self.sess.scalar(query) or 0.0
 
-        return cls(**result._mapping)
+    def previous_month_total(self) -> float:
+        period = dt.date(self.period.year, self.period.month, 1) - dt.timedelta(days=1)
+        period = dt.date(period.year, period.month, 1)
+        query = self._get_total_query(period)
+        return self.sess.scalar(query) or 0.0
+
+    def previous_year_total(self) -> float:
+        period = dt.date(self.period.year - 1, self.period.month, self.period.day)
+        query = self._get_total_query(period)
+        return self.sess.scalar(query) or 0.0
+
+    def top_businesses(self) -> list[dict]:
+        query = (
+            select(
+                TransactionModel.business_id,
+                BusinessModel.name,
+                func.count(TransactionModel.id).label("count"),
+                func.sum(TransactionModel.amount).label("amount"),
+            )
+            .join_from(
+                TransactionModel,
+                BusinessModel,
+                onclause=TransactionModel.business_id == BusinessModel.id,
+                isouter=True,
+            )
+            .where(
+                TransactionModel.account_id == self.account_id,
+                TransactionModel.period_id == self.period_id,
+            )
+            .group_by(TransactionModel.business_id)
+            .order_by(column("amount").desc())
+            .limit(self.top_n)
+        )
+        return self.sess.execute(query).all()
+
+    def top_categories(self) -> list[dict]:
+        query = (
+            select(
+                TransactionModel.category_id,
+                CategoryModel.name,
+                func.count(TransactionModel.id).label("count"),
+                func.sum(TransactionModel.amount).label("amount"),
+            )
+            .join_from(
+                TransactionModel,
+                CategoryModel,
+                onclause=TransactionModel.category_id == CategoryModel.id,
+                isouter=True,
+            )
+            .where(
+                TransactionModel.account_id == self.account_id,
+                TransactionModel.period_id == self.period_id,
+            )
+            .group_by(TransactionModel.category_id)
+            .order_by(column("amount").desc())
+            .limit(self.top_n)
+        )
+        return self.sess.execute(query).all()
 
 
 @dataclass
