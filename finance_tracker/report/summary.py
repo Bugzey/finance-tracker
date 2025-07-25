@@ -20,11 +20,10 @@ from typing import Self
 
 import matplotlib
 import matplotlib.pyplot as plt
-from sqlalchemy import Engine, select, func, column
+from sqlalchemy import Engine, select, func, column, text
 from sqlalchemy.orm import Session
 
 from finance_tracker.models import (
-    AccountModel,
     BusinessModel,
     CategoryModel,
     PeriodModel,

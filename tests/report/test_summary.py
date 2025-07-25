@@ -48,6 +48,10 @@ class SummaryMetricsTestCase(unittest.TestCase):
         )
         self.period_manager = PeriodManager(self.engine)
 
+    @classmethod
+    def tearDownClass(self):
+        self.sess.rollback()
+
     def test_init(self):
         metrics = SummaryMetrics(self.sess)
         self.assertIsInstance(metrics, SummaryMetrics)

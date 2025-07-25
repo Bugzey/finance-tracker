@@ -3,8 +3,6 @@ Reporting front-end
 """
 
 import base64
-from dataclasses import dataclass
-from typing import Any
 
 from flask import (
     Flask,
@@ -57,8 +55,8 @@ def summary():
     with Session(app.config.engine) as sess:
         periods = get_periods(sess)
         accounts = get_accounts(sess)
-        period_id = int(request.form.get("period")) or list(periods.keys())[-1]
-        account_id = int(request.form.get("account")) or list(accounts.keys())[0]
+        period_id = int(request.form.get("period") or list(periods.keys())[-1])
+        account_id = int(request.form.get("account") or list(accounts.keys())[0])
 
         metrics = SummaryMetrics(sess, period_id=period_id, account_id=account_id)
         current_month_spend = metrics.current_month_total()
@@ -104,4 +102,4 @@ def summary():
         account_id=account_id,
         period_id=period_id,
     )
-    plot = base64.b64encode(plot_bytes.plot_svg).decode("utf-8")
+    _ = base64.b64encode(plot_bytes.plot_svg).decode("utf-8")

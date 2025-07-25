@@ -13,21 +13,30 @@ header {
 	text-align: center;
 }
 
+/* Navigation styles */
 nav {
-	background-color: #eee;
-	padding: 0.5em 0;
+    background-color: #333; /* Dark background for the navigation bar */
+    overflow: hidden; /* Prevents layout issues */
 }
 
-nav ul {
-	list-style: none;
-	padding: 0;
-	margin: 0;
-	text-align: center;
+nav a {
+    float: left; /* Makes the links appear horizontally */
+    display: block; /* Important for padding and margin to work correctly */
+    color: white; /* White text color */
+    text-align: center;
+    padding: 14px 16px;
+    text-decoration: none; /* Removes underlines from links */
+    transition: background-color 0.3s ease; /* Smooth transition for hover effect */
 }
 
-nav li {
-	display: inline;
-	margin: 0 1em;
+nav a:hover {
+    background-color: #ddd; /* Light gray background on hover */
+    color: black; /* Black text on hover */
+}
+
+nav a.active {
+    background-color: #4CAF50; /* Green background for the active page */
+    color: white;
 }
 
 main {
