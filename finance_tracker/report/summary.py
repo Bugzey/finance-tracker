@@ -13,7 +13,7 @@ What do we want in terms of data?
 - (future): multi-select - add child accounts
 """
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 import datetime as dt
 import io
 from typing import Self
@@ -67,20 +67,34 @@ group by
 @dataclass
 class SummaryMetrics:
     sess: Session
-    period: dt.date | None = None
+    period_id: int | None = None
     account_id: int | None = None
     top_n: int = 10
 
+    period: dt.date = field(init=False)
+
     def __post_init__(self):
-        self.period = self.period or self.sess.execute(
-            select(func.max(PeriodModel.period_start))
-            .where(
-                PeriodModel.id.in_(
-                    select(TransactionModel.period_id)
-                    .scalar_subquery()
+        if self.period_id:
+            period = self.sess.scalars(
+                select(PeriodModel)
+                .where(PeriodModel.id == self.period_id)
+            ).first()
+            self.period = period.period_start
+        else:
+            period = self.sess.scalars(
+                select(PeriodModel)
+                .where(
+                    PeriodModel.id.in_(
+                        select(TransactionModel.period_id)
+                        .distinct()
+                        .scalar_subquery()
+                    )
                 )
-            )
-        ).scalar()
+                .order_by(PeriodModel.period_start.desc())
+            ).first()
+            self.period_id = period.id
+            self.period = period.period_start
+
         self.account_id = self.account_id or 1
 
     def _get_total_query(self, period: dt.date) -> float:
@@ -127,14 +141,11 @@ class SummaryMetrics:
                 TransactionModel,
                 BusinessModel,
                 onclause=TransactionModel.business_id == BusinessModel.id,
+                isouter=True,
             )
             .where(
                 TransactionModel.account_id == self.account_id,
-                TransactionModel.period_id == (
-                    select(PeriodModel.id)
-                    .where(PeriodModel.period_start == self.period)
-                    .scalar_subquery()
-                ),
+                TransactionModel.period_id == self.period_id,
             )
             .group_by(TransactionModel.business_id)
             .order_by(column("amount").desc())
@@ -154,16 +165,11 @@ class SummaryMetrics:
                 TransactionModel,
                 CategoryModel,
                 onclause=TransactionModel.category_id == CategoryModel.id,
+                isouter=True,
             )
             .where(
                 TransactionModel.account_id == self.account_id,
-                TransactionModel.period_id == (
-                    select(PeriodModel.id)
-                    .where(
-                        PeriodModel.period_start == self.period,
-                    )
-                    .scalar_subquery()
-                ),
+                TransactionModel.period_id == self.period_id,
             )
             .group_by(TransactionModel.category_id)
             .order_by(column("amount").desc())

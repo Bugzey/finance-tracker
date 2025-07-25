@@ -40,7 +40,7 @@ def get_accounts(sess: Session) -> dict[int, str]:
 def get_periods(sess: Session) -> dict[int, str]:
     query = (
         select(PeriodModel.id, PeriodModel.period_start)
-        .order_by(PeriodModel.id)
+        .order_by(PeriodModel.period_start)
     )
     data = sess.execute(query).all()
     result = {item.id: item.period_start.isoformat() for item in data}
@@ -52,16 +52,15 @@ def home():
     return render_template("home.html")
 
 
-@app.route("/summary/")
+@app.route("/summary/", methods=["GET", "POST"])
 def summary():
     with Session(app.config.engine) as sess:
         periods = get_periods(sess)
         accounts = get_accounts(sess)
-        period = request.form.get("period") or list(periods.keys())[-1]
-        account_id = request.form.get("account") or list(accounts.keys())[0]
+        period_id = int(request.form.get("period")) or list(periods.keys())[-1]
+        account_id = int(request.form.get("account")) or list(accounts.keys())[0]
 
-        #   TODO: refactor metrics to accept account_id and period_id
-        metrics = SummaryMetrics(sess, period=period, account_id=account_id)
+        metrics = SummaryMetrics(sess, period_id=period_id, account_id=account_id)
         current_month_spend = metrics.current_month_total()
         last_month_spend = metrics.previous_month_total()
         previous_year_spend = metrics.previous_year_total()
@@ -69,14 +68,22 @@ def summary():
         top_categories = metrics.top_categories() or []
 
     #   Format items
-    top_businesses_header = top_businesses[0]._fields if top_businesses else []
-    top_categories_header = top_businesses[0]._fields if top_categories else []
+    top_businesses_header = [
+        item.replace("_", " ").title()
+        for item
+        in top_businesses[0]._fields
+    ] if top_businesses else []
+    top_categories_header = [
+        item.replace("_", " ").title()
+        for item
+        in top_categories[0]._fields
+    ] if top_categories else []
 
     return render_template(
         "summary.html",
         #   Filters
         period_values=periods,
-        period_selected=period,
+        period_selected=period_id,
         account_values=accounts,
         account_selected=account_id,
 
@@ -98,4 +105,3 @@ def summary():
         period_id=period_id,
     )
     plot = base64.b64encode(plot_bytes.plot_svg).decode("utf-8")
-    return render_template("summary.html", metrics=metrics, plot=plot, filters=filters)
