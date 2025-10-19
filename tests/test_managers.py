@@ -115,6 +115,7 @@ class TransactionManagerTestCase(unittest.TestCase):
         self.engine = create_engine("sqlite:///:memory:")
         BaseModel.metadata.create_all(self.engine)
         self.account = AccountManager(self.engine).create(name="Account")
+        self.account_for = AccountManager(self.engine).create(name="Other")
         self.period = PeriodManager(self.engine).create(period_start=dt.date(2022, 1, 1))
         self.category = CategoryManager(self.engine).create(name="Daily life")
         self.subcategory = SubcategoryManager(self.engine).create(
@@ -198,3 +199,37 @@ class TransactionManagerTestCase(unittest.TestCase):
         self.assertGreater(len(periods), 2)
         self.assertEqual(periods[1].period_start, dt.date(2024, 1, 1))
         self.assertEqual(periods[2].period_start, dt.date(2024, 2, 1))
+
+    def test_account_for(self):
+        #   Nothing given
+        transaction_manager = TransactionManager(self.engine)
+        tran = transaction_manager.create(
+            account_id=1,
+            transaction_date="2024-01-01",
+            amount=20,
+            category_id=self.category.id,
+            subcategory_id=self.subcategory.id,
+        )
+        self.assertEqual(tran.account_for_id, 1)
+
+        #   Self is given
+        tran = transaction_manager.create(
+            account_id=1,
+            account_for_id=1,
+            transaction_date="2024-01-01",
+            amount=20,
+            category_id=self.category.id,
+            subcategory_id=self.subcategory.id,
+        )
+        self.assertEqual(tran.account_for_id, 1)
+
+        #   Other is given
+        tran = transaction_manager.create(
+            account_id=1,
+            transaction_date="2024-01-01",
+            amount=20,
+            account_for_id=2,
+            category_id=self.category.id,
+            subcategory_id=self.subcategory.id,
+        )
+        self.assertEqual(tran.account_for_id, 2)

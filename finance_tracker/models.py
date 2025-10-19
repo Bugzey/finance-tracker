@@ -79,7 +79,9 @@ class TransactionModel(BaseModel):
     amount: Mapped[Decimal]
     transaction_date: Mapped[dt.date | None]
     account_id: Mapped[int] = mapped_column(ForeignKey("account.id"))
-    account: Mapped["AccountModel"] = relationship()
+    account: Mapped["AccountModel"] = relationship(foreign_keys=[account_id])
+    account_for_id: Mapped[int] = mapped_column(ForeignKey("account.id"))
+    account_for: Mapped["AccountModel"] = relationship(foreign_keys=[account_for_id])
     category_id: Mapped[int] = mapped_column(ForeignKey("category.id"))
     category: Mapped["CategoryModel"] = relationship()
     subcategory_id: Mapped[int] = mapped_column(ForeignKey("subcategory.id"))
