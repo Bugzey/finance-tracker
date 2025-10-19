@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 
 from finance_tracker.report.summary import (
     SummaryMetrics,
+    SummaryPlot,
 )
 from finance_tracker.models import BaseModel
 from finance_tracker.managers import (
@@ -64,3 +65,26 @@ class SummaryMetricsTestCase(unittest.TestCase):
         self.assertEqual(metrics.current_month_total(), 50)
         self.assertEqual(metrics.previous_month_total(), 25)
         self.assertEqual(metrics.previous_year_total(), 12.5)
+
+
+class SummaryPlotTestCase(unittest.TestCase):
+    @classmethod
+    def setUpClass(self):
+        self.box_data = [
+            {"category": "bla", "target": 10},
+            {"category": "alb", "target": 20},
+        ]
+        self.plot = SummaryPlot()
+
+    def test_reshape(self):
+        result = self.plot._reshape(self.box_data)
+        self.assertEqual(
+            result,
+            {
+                "category": ["bla", "alb"],
+                "target": [10, 20],
+            },
+        )
+
+    def test_make_boxplot(self):
+        _ = self.plot.make_boxplot(self.box_data, category="category", target="target")

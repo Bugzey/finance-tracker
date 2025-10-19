@@ -65,6 +65,8 @@ def summary():
         top_businesses = metrics.top_businesses() or []
         top_categories = metrics.top_categories() or []
 
+        account_for_data = metrics.get_account_for_total()
+
     #   Format items
     top_businesses_header = [
         item.replace("_", " ").title()
@@ -76,6 +78,16 @@ def summary():
         for item
         in top_categories[0]._fields
     ] if top_categories else []
+
+    #   Images
+    plot = SummaryPlot()
+    account_for_graph = plot.make_barplot(
+        account_for_data,
+        category="account_for_name",
+        target="amount",
+        y_label="Amount",
+        x_label="Account For",
+    )
 
     return render_template(
         "summary.html",
@@ -95,6 +107,9 @@ def summary():
         top_businesses_data=top_businesses,
         top_categories_headers=top_categories_header,
         top_categories_data=top_categories,
+
+        #   Images
+        account_for_graph=account_for_graph,
     )
 
     plot_bytes = SummaryPlot.from_engine(
