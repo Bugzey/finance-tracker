@@ -199,6 +199,10 @@ class TransactionManager(BaseManager):
             data["category_id"] = data.get("category_id", business.default_category_id)
             data["subcategory_id"] = data.get("subcategory_id", business.default_subcategory_id)
 
+        #   Account for is the same as account if not given
+        if not data.get("account_for_id"):
+            data["account_for_id"] = data["account_id"]
+
         return super().create(**data)
 
     def update(self, id: int, **data) -> BaseModel:

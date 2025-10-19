@@ -50,3 +50,7 @@
     </div>
 {% endmacro %}
 
+
+{% macro image(data, format="png") %}
+<img src="data:image/{{ format }};base64, {{ data }}" />
+{% endmacro %}

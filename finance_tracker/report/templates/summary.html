@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% from "_macros.html" import metric, selector, table %}
+{% from "_macros.html" import metric, selector, table, image %}
 
 {% block content %}
 	<h2 >Summary Report</h2>
@@ -29,5 +29,10 @@
 	<div class="summary-section">
 		<h3 >Top 10 Businesses</h3>
 		{{ table(top_businesses_headers, top_businesses_data) }}
+	</div>
+
+	<div class="summary-section">
+		<h3 >Account For</h3>
+		{{ image(account_for_graph) }}
 	</div>
 {% endblock %}
