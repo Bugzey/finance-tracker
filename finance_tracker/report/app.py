@@ -66,6 +66,7 @@ def summary():
         top_categories = metrics.top_categories() or []
 
         account_for_data = metrics.get_account_for_total()
+        history_data = metrics.get_history()
 
     #   Format items
     top_businesses_header = [
@@ -87,6 +88,14 @@ def summary():
         target="amount",
         y_label="Amount",
         x_label="Account For",
+    )
+    history_graph = plot.make_linechart(
+        history_data,
+        period="period_start",
+        target="amount",
+        y_label="Amount",
+        x_label="Period",
+        x_rotate=45,
     )
 
     return render_template(
@@ -110,6 +119,7 @@ def summary():
 
         #   Images
         account_for_graph=account_for_graph,
+        history_graph=history_graph,
     )
 
     plot_bytes = SummaryPlot.from_engine(
