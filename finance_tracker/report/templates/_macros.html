@@ -4,7 +4,7 @@
         <span class="metric-label">{{ label }}</span>
         {% if comparison_value %}
             <div class="metric-comparison">
-                <span class="comparison-value">{{ ((comparison_value or 0.0) - value) | round(2) }}</span>
+                <span class="comparison-value">{{ ((comparison_value | float) or 0.0) - (value | float) | round(2) }}</span>
                 <span class="comparison-label">{{ comparison_label }}</span>
             </div>
         {% endif %}

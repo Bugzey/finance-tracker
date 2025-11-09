@@ -175,6 +175,29 @@ class SummaryMetrics:
         )
         return self.sess.execute(query).mappings().all()
 
+    def get_history(self) -> list[dict]:
+        query = (
+            select(
+                PeriodModel.id,
+                PeriodModel.period_start,
+                func.sum(TransactionModel.amount).label("amount"),
+            )
+            .select_from(PeriodModel)
+            .outerjoin(TransactionModel)
+            .where(
+                PeriodModel.period_start >= self.period.replace(year=self.period.year-1),
+                PeriodModel.period_start <= self.period,
+                TransactionModel.account_id == self.account_id,
+            )
+            .group_by(
+                PeriodModel.id,
+            )
+            .order_by(
+                PeriodModel.period_start,
+            )
+        )
+        return self.sess.execute(query).mappings().all()
+
 
 @dataclass
 class SummaryPlot:
@@ -196,7 +219,7 @@ class SummaryPlot:
         """
         Reshape a list of row data into a list of column dictionaries for use by matplotlib
         """
-        keys = list(data[0].keys())
+        keys = list(data[0].keys()) if data else []
         result = {
             key: [row[key] for row in data]
             for key
@@ -204,17 +227,33 @@ class SummaryPlot:
         }
         return result
 
-    def make_history_linechart(self, data: dict) -> bytes:
+    def make_linechart(
+        self,
+        data: dict,
+        period: str,
+        target: str,
+        y_label: str | None = None,
+        x_label: str | None = None,
+        y_min: int = 0,
+        y_max: int = None,
+        x_rotate: int = 0,
+    ) -> bytes:
         """
         Create the graph and output it PNG format as a bytes object
         """
         data = self._reshape(data)
+        y_max = y_max or (float(max(data[target]))) if data else 1
+
         fig, ax = plt.subplots(layout="constrained")
-        ax.plot(data["period_start"], data["amount"])
-        ax.set_xlabel("Period")
-        ax.set_ylabel("Amount")
+        ax.plot(data.get(period, []), data.get(target, []))
+
+        ax.grid(visible=True, which="major", axis="both")
+        ax.set_xlabel(x_label or period)
+        ax.set_ylabel(y_label or target)
         ax.set_ylim(ymin=0)
         ax.set_title("Total Amount")
+        ax.set(ylim=(y_min, y_max * 1.1))
+        ax.tick_params("x", rotation=x_rotate)
 
         return self._make_plot(fig)
 
@@ -229,10 +268,10 @@ class SummaryPlot:
         y_max: int = None,
     ) -> bytes:
         data = self._reshape(data)
-        y_max = y_max or float(max(data[target]))
+        y_max = y_max or (float(max(data[target]))) if data else 1
 
         fig, ax = plt.subplots(layout="constrained")
-        ax.bar(data[category], data[target], align="center")
+        ax.bar(data.get(category, []), data.get(target, []), align="center")
         ax.set_xlabel(x_label or category)
         ax.set_ylabel(y_label or target)
         ax.set(
