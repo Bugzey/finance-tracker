@@ -58,7 +58,7 @@ def summary():
         period_id = int(request.form.get("period") or list(periods.keys())[-1])
         account_id = int(request.form.get("account") or list(accounts.keys())[0])
 
-        metrics = SummaryMetrics(sess, period_id=period_id, account_id=account_id)
+        metrics = SummaryMetrics(sess, period_id=period_id, account_ids=[account_id])
         current_month_spend = metrics.current_month_total()
         last_month_spend = metrics.previous_month_total()
         previous_year_spend = metrics.previous_year_total()

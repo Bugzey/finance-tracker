@@ -20,7 +20,7 @@ import io
 
 import matplotlib
 import matplotlib.pyplot as plt
-from sqlalchemy import select, func, column
+from sqlalchemy import select, func, column, Select, and_
 from sqlalchemy.orm import Session
 
 from finance_tracker.models import (
@@ -39,7 +39,7 @@ matplotlib.use("svg")
 class SummaryMetrics:
     sess: Session
     period_id: int | None = None
-    account_id: int | None = None
+    account_ids: list[int] | None = None
     account_for_ids: list[int] | None = None
     top_n: int = 10
 
@@ -67,8 +67,6 @@ class SummaryMetrics:
             self.period_id = period.id
             self.period = period.period_start
 
-        self.account_id = self.account_id or 1
-
     def _get_total_query(self, period: dt.date) -> float:
         query = (
             select(func.sum(TransactionModel.amount).label("amount"))
@@ -77,7 +75,7 @@ class SummaryMetrics:
                     select(PeriodModel.id)
                     .where(
                         PeriodModel.period_start == period,
-                        TransactionModel.account_id == self.account_id,
+                        self._filter_accounts(),
                     )
                     .scalar_subquery()
                 )
@@ -85,6 +83,18 @@ class SummaryMetrics:
             .group_by(TransactionModel.period_id)
         )
         return query
+
+    def _filter_accounts(self, query: Select | None = None) -> Select:
+        query = query if query is not None else TransactionModel.__table__
+        result = and_(
+            (query.c.account_id.in_(self.account_ids) if self.account_ids else True),
+            (
+                query.c.account_for_id.in_(self.account_for_ids)
+                if self.account_for_ids
+                else True
+            ),
+        )
+        return result
 
     def current_month_total(self) -> float:
         query = self._get_total_query(self.period)
@@ -116,8 +126,8 @@ class SummaryMetrics:
                 isouter=True,
             )
             .where(
-                TransactionModel.account_id == self.account_id,
                 TransactionModel.period_id == self.period_id,
+                self._filter_accounts(),
             )
             .group_by(TransactionModel.business_id)
             .order_by(column("amount").desc())
@@ -140,8 +150,8 @@ class SummaryMetrics:
                 isouter=True,
             )
             .where(
-                TransactionModel.account_id == self.account_id,
                 TransactionModel.period_id == self.period_id,
+                self._filter_accounts(),
             )
             .group_by(TransactionModel.category_id)
             .order_by(column("amount").desc())
@@ -161,13 +171,8 @@ class SummaryMetrics:
                 TransactionModel.account_for_id == AccountModel.id,
             )
             .where(
-                TransactionModel.account_id == self.account_id,
                 TransactionModel.period_id == self.period_id,
-                (
-                    TransactionModel.account_for_id.in_(self.account_for_ids)
-                    if self.account_for_ids
-                    else 1 == 1
-                ),
+                self._filter_accounts(),
             )
             .group_by(
                 TransactionModel.account_for_id,
@@ -187,7 +192,7 @@ class SummaryMetrics:
             .where(
                 PeriodModel.period_start >= self.period.replace(year=self.period.year-1),
                 PeriodModel.period_start <= self.period,
-                TransactionModel.account_id == self.account_id,
+                self._filter_accounts(),
             )
             .group_by(
                 PeriodModel.id,
