@@ -39,12 +39,12 @@
 {% endmacro %}
 
 
-{% macro selector(label, values, selected_value) %}
+{% macro selector(label, values, selected_values, is_multiple=False) %}
     <div class="selector-container">
         <label class="selector-label">{{ label }}:</label>
-        <select name="{{ label|lower }}" >
+		<select name="{{ label | lower | replace(" ", "_") }}" {% if is_multiple %}multiple{% endif %}>
             {% for value, display_name in values.items() %}
-                <option value="{{ value }}" {% if value == selected_value %}selected{% endif %}>{{ display_name }}</option>
+                <option value="{{ value }}" {% if value in selected_values %}selected{% endif %}>{{ display_name }}</option>
             {% endfor %}
         </select>
     </div>
