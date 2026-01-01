@@ -2,8 +2,6 @@
 Reporting front-end
 """
 
-import base64
-
 from flask import (
     Flask,
     render_template,
@@ -55,10 +53,16 @@ def summary():
     with Session(app.config.engine) as sess:
         periods = get_periods(sess)
         accounts = get_accounts(sess)
-        period_id = int(request.form.get("period") or list(periods.keys())[-1])
-        account_id = int(request.form.get("account") or list(accounts.keys())[0])
+        period_id = request.form.get("period", default=list(periods.keys())[-1], type=int)
+        account_ids = request.form.getlist("account", int)
+        account_for_ids = request.form.getlist("account_for", int)
 
-        metrics = SummaryMetrics(sess, period_id=period_id, account_ids=[account_id])
+        metrics = SummaryMetrics(
+            sess,
+            period_id=period_id,
+            account_ids=account_ids,
+            account_for_ids=account_for_ids,
+        )
         current_month_spend = metrics.current_month_total()
         last_month_spend = metrics.previous_month_total()
         previous_year_spend = metrics.previous_year_total()
@@ -102,9 +106,11 @@ def summary():
         "summary.html",
         #   Filters
         period_values=periods,
-        period_selected=period_id,
+        period_selected=[period_id],
         account_values=accounts,
-        account_selected=account_id,
+        account_selected=account_ids,
+        account_for_values=accounts,
+        account_for_selected=account_for_ids,
 
         #   Metrics
         current_month_spend=current_month_spend,
@@ -121,10 +127,3 @@ def summary():
         account_for_graph=account_for_graph,
         history_graph=history_graph,
     )
-
-    plot_bytes = SummaryPlot.from_engine(
-        app.config.engine,
-        account_id=account_id,
-        period_id=period_id,
-    )
-    _ = base64.b64encode(plot_bytes.plot_svg).decode("utf-8")

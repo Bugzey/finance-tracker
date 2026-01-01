@@ -8,8 +8,9 @@
 	<div class="summary-section">
 		<h3>Filters</h3>
 		<form class="filters" id="filters" method="post">
-			{{ selector("Period", period_values, period_selected) }}
-			{{ selector("Account", account_values, account_selected) }}
+			{{ selector("Period", period_values, period_selected, is_multiple=False) }}
+			{{ selector("Account", account_values, account_selected, is_multiple=True) }}
+			{{ selector("Account For", account_for_values, account_for_selected, is_multiple=True) }}
 			<button type="submit">Submit</button>
 		</form>
 	</div>
