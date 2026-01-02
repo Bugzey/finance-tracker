@@ -6,6 +6,7 @@ import datetime as dt
 from decimal import Decimal
 from uuid import uuid4
 
+import colorama
 from sqlalchemy import (
     ForeignKey,
     func,
@@ -16,6 +17,8 @@ from sqlalchemy.orm import (
     mapped_column,
     relationship,
 )
+
+colorama.just_fix_windows_console()
 
 
 class BaseModel(DeclarativeBase):
@@ -29,11 +32,22 @@ class BaseModel(DeclarativeBase):
     )
 
     def __repr__(self):
+        sort_key = {"id": 0, "name": 1}
+        ignore_cols = ("created_time", "updated_time")
         name = self.__class__.__name__
         fields = [
+            #   No coloring
             f"{item.name}='{self.__dict__[item.name]}'"
+            if item.name not in ("id", "name")
+
+            #   Color for id and name
+            else (
+                f"{item.name}="
+                f"'{colorama.Style.BRIGHT}{self.__dict__[item.name]}{colorama.Style.RESET_ALL}'"
+            )
             for item
-            in self.__table__.c
+            in sorted(self.__table__.c, key=lambda x: sort_key.get(x.name, 9999))
+            if item.name not in ignore_cols
         ]
         result = f"{name}({', '.join(fields)})"
         return result

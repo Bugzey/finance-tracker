@@ -1,3 +1,4 @@
+colorama
 flask
 opencv-python
 sqlalchemy~=2.0
