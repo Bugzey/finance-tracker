@@ -13,6 +13,7 @@ authors = [
 	{name = "Radoslav Dimitrov", email = "radddi@abv.bg"},
 ]
 dependencies = [
+	"alembic",
 	"colorama",
 	"sqlalchemy~=2.0",
 	"opencv-python",
