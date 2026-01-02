@@ -10,6 +10,7 @@ import colorama
 from sqlalchemy import (
     ForeignKey,
     func,
+    UniqueConstraint,
 )
 from sqlalchemy.orm import (
     DeclarativeBase,
@@ -65,9 +66,31 @@ class SubcategoryModel(BaseModel):
     category: Mapped["CategoryModel"] = relationship()
 
 
+class CurrencyModel(BaseModel):
+    __tablename__ = "currency"
+    code: Mapped[str] = mapped_column(unique=True)
+    name: Mapped[str] = mapped_column()
+
+
+class CurrencyRateModel(BaseModel):
+    __tablename__ = "currency_rate"
+    __table_args__ = (
+        UniqueConstraint(
+            "period_id", "currency_from_id", "currency_to_id",
+            name="uq_period_currency_from_currency_to",
+        )
+    )
+    period_id: Mapped[int] = mapped_column(ForeignKey("period.id"))
+    currency_from_id: Mapped[int] = mapped_column(ForeignKey("currency.id"))
+    currency_to_id: Mapped[int] = mapped_column(ForeignKey("currency.id"))
+    rate: Mapped[float] = mapped_column()
+
+
 class AccountModel(BaseModel):
     __tablename__ = "account"
     name: Mapped[str]
+    default_currency_id: Mapped[str] = mapped_column(ForeignKey("currency.id"))
+    default_currency: Mapped["CurrencyModel"] = relationship()
 
 
 class BusinessModel(BaseModel):
@@ -104,3 +127,4 @@ class TransactionModel(BaseModel):
     business: Mapped["BusinessModel"] = relationship()
     period_id: Mapped[int] = mapped_column(ForeignKey("period.id"))
     period: Mapped["PeriodModel"] = relationship()
+    currency_id: Mapped["CurrencyModel"] = mapped_column(ForeignKey("currency.id"))
