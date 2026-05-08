@@ -78,7 +78,7 @@ class CurrencyRateModel(BaseModel):
         UniqueConstraint(
             "period_id", "currency_from_id", "currency_to_id",
             name="uq_period_currency_from_currency_to",
-        )
+        ),
     )
     period_id: Mapped[int] = mapped_column(ForeignKey("period.id"))
     currency_from_id: Mapped[int] = mapped_column(ForeignKey("currency.id"))

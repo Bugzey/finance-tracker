@@ -17,6 +17,7 @@ from finance_tracker.managers import (
     AccountManager,
     BusinessManager,
     CategoryManager,
+    CurrencyManager,
     PeriodManager,
     SubcategoryManager,
     TransactionManager,
@@ -104,8 +105,10 @@ class DBHandler:
 
     @staticmethod
     def initial_setup(engine: Engine):
-        from finance_tracker.default_data import category, subcategory, account
-        _ = [AccountManager(engine).create(**data) for data in account]
+        from finance_tracker.default_data import category, subcategory, account, currency
+        currencies = [CurrencyManager(engine).create(**data) for data in currency]
+        cur = interact("Choose default currency:", currencies)
+        _ = [AccountManager(engine).create(**data, default_currency_id=cur.id) for data in account]
         ex_cat = {
             data["name"]: CategoryManager(engine).create(**data).id
             for data

@@ -10,6 +10,7 @@ from finance_tracker.models import (
     AccountModel,
     BaseModel,
     BusinessModel,
+    CurrencyModel,
     CategoryModel,
     SubcategoryModel,
     TransactionModel,
@@ -29,7 +30,9 @@ class TestBase(unittest.TestCase):
 
 class AccountModelTestCase(TestBase):
     def test_account(self):
-        result = AccountModel(name="some_name")
+        currency = CurrencyModel(code="BGN", name="Bulgarian Lev")
+        self.session.add(currency)
+        result = AccountModel(name="some_name", default_currency=currency)
         self.session.add(result)
         self.assertTrue(result, AccountModel)
         self.assertEqual(result.name, "some_name")
@@ -38,7 +41,9 @@ class AccountModelTestCase(TestBase):
 class TransactionTestCase(TestBase):
     def setUp(self):
         super().setUp()
-        self.account = AccountModel(name="account")
+        currency = CurrencyModel(code="BGN", name="Bulgarian Lev")
+        self.session.add(currency)
+        self.account = AccountModel(name="account", default_currency=currency)
         self.category = CategoryModel(name="category")
         self.subcategory = SubcategoryModel(
             name="subcategory",

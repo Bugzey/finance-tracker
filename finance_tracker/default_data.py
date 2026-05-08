@@ -168,3 +168,19 @@ subcategory = {
         )
     ],
 }
+
+currency = [
+    {"code": "EUR", "name": "Euro"},
+    {"code": "USD", "name": "United States Dollar"},
+    {"code": "GBP", "name": "Pound Sterling"},
+    {"code": "BGN", "name": "Bulgarian Lev"},
+    {"code": "CHF", "name": "Swiss Frank"},
+    {"code": "JPY", "name": "Japanese Yen"},
+    {"code": "CNY", "name": "Chinese Yuan"},
+    {"code": "PLN", "name": "Polish Zloty"},
+    {"code": "CZK", "name": "Czech Koruna"},
+    {"code": "RON", "name": "Romanian Leu"},
+    {"code": "DKK", "name": "Danish Krone"},
+    {"code": "TRY", "name": "Turkish Lira"},
+    {"code": "RUB", "name": "Russian Ruble"},
+]

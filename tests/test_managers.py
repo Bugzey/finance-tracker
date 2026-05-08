@@ -19,6 +19,7 @@ from finance_tracker.models import (
 from finance_tracker.managers import (
     BaseManager,
     AccountManager,
+    CurrencyManager,
     BusinessManager,
     CategoryManager,
     SubcategoryManager,
@@ -114,8 +115,15 @@ class TransactionManagerTestCase(unittest.TestCase):
     def setUp(self):
         self.engine = create_engine("sqlite:///:memory:")
         BaseModel.metadata.create_all(self.engine)
-        self.account = AccountManager(self.engine).create(name="Account")
-        self.account_for = AccountManager(self.engine).create(name="Other")
+        self.currency = CurrencyManager(self.engine).create(code="BGN", name="Bulgarian Lev")
+        self.account = AccountManager(self.engine).create(
+            name="Account",
+            default_currency_id=self.currency.id,
+        )
+        self.account_for = AccountManager(self.engine).create(
+            name="Other",
+            default_currency_id=self.currency.id,
+        )
         self.period = PeriodManager(self.engine).create(period_start=dt.date(2022, 1, 1))
         self.category = CategoryManager(self.engine).create(name="Daily life")
         self.subcategory = SubcategoryManager(self.engine).create(

@@ -18,6 +18,8 @@ from finance_tracker.models import (
     AccountModel,
     BusinessModel,
     CategoryModel,
+    CurrencyModel,
+    CurrencyRateModel,
     SubcategoryModel,
     PeriodModel,
     TransactionModel,
@@ -124,6 +126,14 @@ class CategoryManager(BaseManager):
     model = CategoryModel
 
 
+class CurrencyManager(BaseManager):
+    model = CurrencyModel
+
+
+class CurrencyRateManager(BaseManager):
+    model = CurrencyRateModel
+
+
 class SubcategoryManager(BaseManager):
     model = SubcategoryModel
 
@@ -147,6 +157,17 @@ class PeriodManager(BaseManager):
         data["code"] = period_start.strftime("%Y%m")
         return super().create(**data)
 
+    def get_or_create_for_date(self, date: dt.date | str) -> PeriodModel:
+        if isinstance(date, str):
+            date = dt.date.fromisoformat(date)
+
+        period_start = date.replace(day=1)
+        period = self.query(period_start=period_start)
+        if not period:
+            period = self.create(period_start)
+
+        return period
+
 
 class TransactionManager(BaseManager):
     model = TransactionModel
@@ -154,37 +175,44 @@ class TransactionManager(BaseManager):
     #   1. Disable delete
     #   2. Cancelling a transaction creates a new transaction for the negative sum
 
+    def _get_period(self, transaction_date: str | None = None) -> PeriodModel:
+        #   Get or create the period corresponding to the transaction date or today
+        period_manager = PeriodManager(self.engine)
+
+        if transaction_date:
+            logger.info(f"Using period for date: {transaction_date}")
+            transaction_date = dt.date.fromisoformat(transaction_date)
+            period_start = dt.date(
+               transaction_date.year,
+               transaction_date.month,
+               1,
+            )
+        else:
+            logger.info("Using period for today")
+            period_start = None
+
+        period = period_manager.query(
+            period_start=period_start,
+        )
+        period = period[0] if period else None
+        if not period:
+            period = period_manager.create(period_start=period_start)  # Today
+
+        return period
+
     def create(self, **data):
         """
         Handle dates if they are not given
         """
         #   Handle periods
         if not data.get("period_id"):
-
-            #   Get or create the period corresponding to the transaction date or today
-            period_manager = PeriodManager(self.engine)
-
-            if data.get("transaction_date"):
-                logger.info(f"Using period for date: {data['transaction_date']}")
-                transaction_date = dt.date.fromisoformat(data["transaction_date"])
-                data["transaction_date"] = transaction_date
-                period_start = dt.date(
-                   transaction_date.year,
-                   transaction_date.month,
-                   1,
-                )
-            else:
-                logger.info("Using period for today")
-                period_start = None
-
-            period = period_manager.query(
-                period_start=period_start,
-            )
-            period = period[0] if period else None
-            if not period:
-                period = period_manager.create(period_start=period_start)  # Today
-
+            period = self._get_period(data.get("transaction_date"))
             data["period_id"] = period.id
+            data["transaction_date"] = (
+                dt.date.fromisoformat(data["transaction_date"])
+                if "transaction_date" in data
+                else period.period_start
+            )
 
         #   Use business categories if not given
         if (
@@ -202,6 +230,12 @@ class TransactionManager(BaseManager):
         #   Account for is the same as account if not given
         if not data.get("account_for_id"):
             data["account_for_id"] = data["account_id"]
+
+        #   Currencies
+        if not data.get("currency_id"):
+            account = AccountManager(self.engine).get(data.get("account_id"))
+            currency = CurrencyManager(self.engine).get(account.default_currency_id)
+            data["currency_id"] = currency.id
 
         return super().create(**data)
 
