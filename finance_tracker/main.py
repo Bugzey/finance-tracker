@@ -2,7 +2,9 @@
 Finance tracker main module
 """
 import logging
+import os
 from pathlib import Path
+import subprocess
 from typing import Any
 
 from sqlalchemy import create_engine
@@ -18,6 +20,7 @@ from finance_tracker.managers import (
     BusinessManager,
     CategoryManager,
     CurrencyManager,
+    CurrencyRateManager,
     PeriodManager,
     SubcategoryManager,
     TransactionManager,
@@ -77,13 +80,25 @@ class DBHandler:
             path = Path(path).expanduser()
             self.create_if_not_exists(path)
             self.engine = self.create_engine(path)
-            BaseModel.metadata.create_all(self.engine)
+
+            #   Use alembic for migration
+            self.migrate_alembic(path)
             if interact("Use default objects?", ["Yes", "No"]) == "Yes":
                 self.initial_setup(engine=self.engine)
 
         print(f"Using path: {path}")
         self.path = path
         self.engine = self.create_engine(path)
+
+    def migrate_alembic(self, path: Path):
+        subprocess.run(
+            ["alembic", "ensure_version"],
+            env={**os.environ, "FINANCE_TRACKER_DB": str(path.expanduser())},
+        ).check_returncode()
+        subprocess.run(
+            ["alembic", "upgrade", "head"],
+            env={**os.environ, "FINANCE_TRACKER_DB": str(path.expanduser())},
+        ).check_returncode()
 
     def check_standard_paths(self):
         return next((item for item in self.paths if item.exists()), None)
@@ -106,7 +121,11 @@ class DBHandler:
     @staticmethod
     def initial_setup(engine: Engine):
         from finance_tracker.default_data import category, subcategory, account, currency
-        currencies = [CurrencyManager(engine).create(**data) for data in currency]
+        if not CurrencyManager(engine).get(id=1):
+            currencies = [CurrencyManager(engine).create(**data) for data in currency]
+        else:
+            currencies = CurrencyManager(engine).query()
+
         cur = interact("Choose default currency:", currencies)
         _ = [AccountManager(engine).create(**data, default_currency_id=cur.id) for data in account]
         ex_cat = {
@@ -144,6 +163,10 @@ def main(args):
         app.run(debug=args.verbose)
         return
 
+    if args.action == "migrate":
+        db_handler.migrate_alembic(db_handler.path)
+        return
+
     args.object = (
         args.object[0]
         if isinstance(args.object, list)
@@ -165,8 +188,12 @@ def main(args):
             manager = BusinessManager
         case "category" | "c":
             manager = CategoryManager
+        case "currency" | "cur":
+            manager = CurrencyManager
         case "period" | "p":
             manager = PeriodManager
+        case "rate" | "r":
+            manager = CurrencyRateManager
         case "subcategory" | "s":
             manager = SubcategoryManager
         case "transaction" | "t":

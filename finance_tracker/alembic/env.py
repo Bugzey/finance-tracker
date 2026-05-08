@@ -1,9 +1,10 @@
 import os
 from logging.config import fileConfig
+from pathlib import Path
 
 from alembic import context
+from sqlalchemy import create_engine
 
-from finance_tracker.main import DBHandler
 from finance_tracker.models import BaseModel
 
 
@@ -26,7 +27,7 @@ target_metadata = BaseModel.metadata
 # can be acquired:
 # my_important_option = config.get_main_option("my_important_option")
 # ... etc.
-db_handler = DBHandler(path=os.getenv("FINANCE_TRACKER_DB"))
+PATH = Path(os.environ["FINANCE_TRACKER_DB"]).expanduser()
 
 
 def run_migrations_offline() -> None:
@@ -41,7 +42,7 @@ def run_migrations_offline() -> None:
     script output.
 
     """
-    url = config.get_main_option("sqlalchemy.url")
+    url = f"sqlite+pysqlite:///{str(PATH)}"
     context.configure(
         url=url,
         target_metadata=target_metadata,
@@ -60,7 +61,7 @@ def run_migrations_online() -> None:
     and associate a connection with the context.
 
     """
-    connectable = db_handler.engine
+    connectable = create_engine(f"sqlite+pysqlite:///{str(PATH)}")
 
     with connectable.connect() as connection:
         context.configure(

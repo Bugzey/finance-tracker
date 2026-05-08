@@ -2,7 +2,6 @@
 Module with argument parsing
 """
 from argparse import ArgumentParser
-from itertools import chain
 
 
 class HasSubparsers:
@@ -20,12 +19,22 @@ def process_data(data: str):
 
 class Parser:
     objects = (
-        "transaction",
-        "category",
-        "subcategory",
         "account",
+        "a",
         "business",
+        "b",
+        "category",
+        "c",
+        "currency",
+        "cur",
         "period",
+        "p",
+        "rate",
+        "r",
+        "subcategory",
+        "s",
+        "transaction",
+        "t",
     )
 
     def get_parser(self):
@@ -52,6 +61,7 @@ class Parser:
         _ = self.add_action(subparsers, "h", "Get a list of data items")
 
         _ = subparsers.add_parser("report", help="Run report server")
+        _ = subparsers.add_parser("migrate", help="Migrate existing data after an upgrade")
 
         #   Add bonus options
         c1.add_argument("-q", "--qr-code", help="Create from QR code", action="store_true")
@@ -66,7 +76,7 @@ class Parser:
     def add_objects_argument(cls, parser: ArgumentParser) -> ArgumentParser:
         parser.add_argument(
             "object",
-            choices=list(chain(*[[item, item[0]]for item in cls.objects])),
+            choices=cls.objects,
             nargs=1,
         )
         return parser

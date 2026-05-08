@@ -80,16 +80,24 @@ class CurrencyRateModel(BaseModel):
             name="uq_period_currency_from_currency_to",
         ),
     )
-    period_id: Mapped[int] = mapped_column(ForeignKey("period.id"))
-    currency_from_id: Mapped[int] = mapped_column(ForeignKey("currency.id"))
-    currency_to_id: Mapped[int] = mapped_column(ForeignKey("currency.id"))
+    period_id: Mapped[int] = mapped_column(
+        ForeignKey("period.id", name="fk_currency_rate_period"),
+    )
+    currency_from_id: Mapped[int] = mapped_column(
+        ForeignKey("currency.id", name="fk_currency_rate_currency_from"),
+    )
+    currency_to_id: Mapped[int] = mapped_column(
+        ForeignKey("currency.id", name="fk_currency_rate_currency_to"),
+    )
     rate: Mapped[float] = mapped_column()
 
 
 class AccountModel(BaseModel):
     __tablename__ = "account"
     name: Mapped[str]
-    default_currency_id: Mapped[str] = mapped_column(ForeignKey("currency.id"))
+    default_currency_id: Mapped[str | None] = mapped_column(
+        ForeignKey("currency.id", name="fk_account_currency"),
+    )
     default_currency: Mapped["CurrencyModel"] = relationship()
 
 
@@ -127,4 +135,7 @@ class TransactionModel(BaseModel):
     business: Mapped["BusinessModel"] = relationship()
     period_id: Mapped[int] = mapped_column(ForeignKey("period.id"))
     period: Mapped["PeriodModel"] = relationship()
-    currency_id: Mapped["CurrencyModel"] = mapped_column(ForeignKey("currency.id"))
+    currency_id: Mapped[CurrencyModel | None] = mapped_column(
+        ForeignKey("currency.id", name="fk_transaction_currency"),
+    )
+    currency: Mapped["CurrencyModel"] = relationship()
