@@ -44,7 +44,7 @@ def interact(prompt: str, choices: list[Any]) -> Any:
 
     print("\n".join(items))
     while True:
-        index = input(f"Which path to use? 1-{len(items)}: ")
+        index = input(f"Choose 1-{len(items)}: ")
         if index.isnumeric():
             index = int(index)
             break

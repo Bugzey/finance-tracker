@@ -72,7 +72,7 @@ def upgrade() -> None:
     #   Interaction
     op.bulk_insert(currency, currencies)
     default_currency = interact("Choose currency for existing data", currencies)
-    default_currency_id = currencies.index(default_currency)
+    default_currency_id = currencies.index(default_currency) + 1
     account = sa.Table("account", sa.MetaData(), autoload_with=op.get_bind())
     op.execute(
         sa.update(account)
